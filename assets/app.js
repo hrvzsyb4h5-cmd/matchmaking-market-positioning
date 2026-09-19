@@ -1,937 +1,246 @@
+'use strict';
 (function () {
-  'use strict';
-
-  /* ============================================================
-     评分模型 —— 专家经验型权重 + 性别差异化曲线
-     ============================================================ */
-  var DIM_WEIGHTS = {
-    male:   { hardware: 0.42, soft: 0.22, family: 0.16, market: 0.20 },
-    female: { hardware: 0.40, soft: 0.25, family: 0.15, market: 0.20 }
-  };
-  var HW_WEIGHTS = {
-    male:   { age: 0.15, height: 0.15, looks: 0.13, education: 0.14, income: 0.15, asset: 0.10, bodyType: 0.09, grooming: 0.09 },
-    female: { age: 0.19, height: 0.11, looks: 0.19, education: 0.14, income: 0.08, asset: 0.11, bodyType: 0.09, grooming: 0.09 }
-  };
-  var SOFT_WEIGHTS = { eq: 0.20, emotional: 0.20, hobby: 0.12, lifestyle: 0.15, values: 0.11, humor: 0.10, ambition: 0.12 };
-  var FAM_WEIGHTS = { familyWealth: 0.25, parents: 0.18, hukouCity: 0.24, socialNet: 0.12, onlyChild: 0.08, parentsMarriage: 0.13 };
-
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-  function sliderScore(v) { return clamp(Math.round(v * 8 + 12), 20, 92); }
-
-  function ageScore(gender, age) {
-    if (gender === 'male') {
-      if (age < 22) return 70; if (age < 25) return 82; if (age < 28) return 90;
-      if (age < 32) return 96; if (age < 35) return 90; if (age < 38) return 78;
-      if (age < 42) return 64; if (age < 45) return 50; return 38;
-    } else {
-      if (age < 22) return 78; if (age < 24) return 90; if (age < 27) return 97;
-      if (age < 30) return 88; if (age < 33) return 72; if (age < 36) return 56;
-      if (age < 40) return 42; return 32;
-    }
+const QUESTIONS = [
+ {id:'age',section:'个人基本情况',title:'你今年多大？',hint:'用于介绍生活阶段，不参与评分。',type:'number',min:18,max:100,unit:'岁'},
+ {id:'city',section:'个人基本情况',title:'你目前常住在哪座城市？',hint:'只需填写城市，不要填写具体地址。',type:'text',max:40,placeholder:'例如：杭州，也可以跳过'},
+ {id:'work',section:'个人基本情况',title:'你的工作与生活节奏更接近哪一种？',options:['时间相对规律','经常加班或出差','轮班或时间不固定','学习或职业调整阶段']},
+ {id:'hobbies',section:'个人基本情况',title:'你愿意分享哪些日常兴趣？',hint:'最多选 3 项；没有贴近的可以跳过。',type:'multi',options:['散步或户外','运动健身','阅读或看电影','做饭与美食','旅行探索','游戏或手作','音乐或艺术']},
+ {id:'chat',section:'相处与表达',title:'认识新朋友时，你通常怎样开启聊天？',options:['比较容易主动分享','先倾听，熟悉后再分享','经常不知道怎么接话','看场合，还不确定']},
+ {id:'conflict',section:'相处与表达',title:'出现分歧时，你更常怎么处理？',options:['说明感受，一起讨论','先冷静，再约时间沟通','容易着急，事后再解释','倾向回避，不太会开口']},
+ {id:'strength',section:'相处与表达',title:'你最想让对方了解自己的哪些特点？',hint:'最多选 3 项。这是自我描述，可以用真实经历来说明。',type:'multi',options:['愿意倾听','做事可靠','喜欢分享生活','尊重独立空间','愿意一起规划','愿意照顾彼此']},
+ {id:'lifestyle',section:'相处与表达',title:'你期待怎样的相处频率？',options:['日常多联系，见面频繁','有固定见面时间，也有个人空间','时间灵活，提前协商','还想通过相处慢慢了解']},
+ {id:'care',section:'家庭与未来安排',title:'目前是否有需要沟通的家庭照护安排？',hint:'只梳理安排，不评价家庭好坏；无需填写健康细节。',options:['暂无固定照护安排','有定期照护安排，时间可协调','有长期照护安排，需要提前沟通','尚不确定']},
+ {id:'housing',section:'家庭与未来安排',title:'对未来居住方式，你更倾向于？',options:['与伴侣独立居住','与家人同住或就近照顾','根据双方工作和情况协商','暂未考虑']},
+ {id:'finance',section:'家庭与未来安排',title:'对于共同生活的开支，你希望怎样安排？',hint:'不需要填写收入或资产数额。',options:['各自独立，共同开支协商','共同预算，定期沟通','按收入和承担的责任协商','还没有想清楚']},
+ {id:'timeline',section:'关系期待',title:'你目前对关系进度的想法是？',options:['希望 1—2 年内考虑结婚','先认真相处，再讨论结婚','希望慢慢了解，不设时间表','还在探索是否适合进入关系']},
+ {id:'children',section:'关系期待',title:'关于生育，你目前的想法是？',hint:'这是需要双方平等沟通的议题，可以跳过。',options:['希望未来有孩子','倾向不生育','还不确定，需要进一步考虑']},
+ {id:'location',section:'关系期待',title:'你对未来定居地点的想法是？',options:['希望留在目前城市','可考虑异地，之后协商定居','愿意根据双方规划调整','暂未确定']},
+ {id:'values',section:'关系期待',title:'长期相处中，你最看重什么？',hint:'最多选 3 项；这些是你想重点了解的方向。',type:'multi',options:['彼此尊重','沟通坦诚','生活节奏接近','消费观能协商','共同成长','家庭边界清晰','愿意承担责任']},
+ {id:'focus',section:'下一步行动',title:'这次你最想解决哪个问题？',options:['理清自己的择偶条件','改善自我介绍','让见面聊天更自然','复盘相亲后的感受']}
+];
+const PREFS = [
+ {id:'age',label:'年龄范围',type:'range',min:18,max:100,unit:'岁'},
+ {id:'height',label:'身高范围',type:'range',min:120,max:230,unit:'cm'},
+ {id:'education',label:'学历偏好',options:['暂不确定','不限学历','大专及以上','本科及以上','硕士及以上']},
+ {id:'school',label:'院校偏好',options:['暂不确定','不限院校','有特定院校偏好，见面时再了解']},
+ {id:'income',label:'月收入期待',options:['暂不确定','不设固定数额，重点沟通开支','8千元及以上','1.5万元及以上','2.5万元及以上','4万元及以上']},
+ {id:'city',label:'定居安排',options:['暂不确定','希望同城发展','可以异地并协商定居','可共同选择城市']},
+ {id:'children',label:'生育意愿',options:['暂不确定','希望未来有孩子','倾向不生育','可以继续讨论']},
+ {id:'housing',label:'居住安排',options:['暂不确定','希望独立居住','可以与家人同住','根据照护和工作安排协商']},
+ {id:'finance',label:'共同开支',options:['暂不确定','各自独立，共同开支协商','共同预算，定期沟通','按收入和责任协商']},
+ {id:'contact',label:'相处频率',options:['暂不确定','希望经常联系和见面','固定见面，也保留个人空间','按双方时间提前协商']}
+];
+const PRIORITIES = ['暂未分类','必须满足','比较看重','可以商量'];
+function escapeHTML(value) {return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function answered(value) {return Array.isArray(value) ? value.length > 0 : value !== null && value !== undefined && value !== '';}
+function displayAnswer(value) {return answered(value) ? (Array.isArray(value) ? value.join('、') : String(value)) : '未填写';}
+function buildReport(a) {
+ const count = QUESTIONS.filter(q => answered(a[q.id])).length;
+ const insights = [];
+ const add = (title,id,meaning,action) => {if(answered(a[id])) insights.push({title,basis:displayAnswer(a[id]),meaning,action});};
+ if(answered(a.strength)) add('用经历说明你想展示的特点','strength','这些是你选择的自我描述，不代表他人已经作出相同评价。','从其中选一个特点，补充一件你亲身经历的小事：发生了什么，你做了什么。');
+ if(answered(a.hobbies)) add('从真实日常开始介绍','hobbies','你选择了愿意分享的兴趣，可以作为认识彼此的起点。','准备一个最近与这些兴趣有关的小片段，并问问对方平时怎样度过休息日。');
+ const chatTips = {
+ '比较容易主动分享':['主动分享是你的自述习惯，也可以留意对方是否有表达空间。','分享一小段后停下来，邀请对方讲讲自己的经历。'],
+ '先倾听，熟悉后再分享':['你更习惯先观察、慢慢熟悉，可以提前说明自己的交流节奏。','准备两件愿意分享的生活小事，听完对方后也主动说一点自己的感受。'],
+ '经常不知道怎么接话':['你提到接话有困难，可以先练习具体追问，不必强迫自己变得幽默。','从对方刚提到的小事追问一次，再分享自己的类似经历。'],
+ '看场合，还不确定':['你还没有确定的交流模式，适合先观察具体情境。','见面后记录哪个话题最自然，以及什么时候你觉得轻松。']
+ };
+ if(chatTips[a.chat]) add('找到舒服的聊天节奏','chat',...chatTips[a.chat]);
+ const conflictTips = {
+ '说明感受，一起讨论':['你倾向于直接讨论，可以进一步确认双方的理解是否一致。','试着说“我当时的感受是……我希望……你怎么看？”'],
+ '先冷静，再约时间沟通':['你需要先整理情绪；让对方知道何时继续沟通会更清楚。','需要暂停时，说明原因，并与对方约定一个双方接受的沟通时间。'],
+ '容易着急，事后再解释':['你注意到自己在分歧中容易着急，可以提前准备暂停表达。','在情绪升高时先提出暂停，平静后描述具体事情、感受和需要。'],
+ '倾向回避，不太会开口':['你提到不容易开口，可以从小分歧练习表达。','先写下想表达的一句话，再选择双方有时间时讨论一件具体的小事。']
+ };
+ if(conflictTips[a.conflict]) add('为分歧准备一种表达方式','conflict',...conflictTips[a.conflict]);
+ const careTips = {
+ '暂无固定照护安排':['你目前没有固定照护安排，未来仍可能变化。','在关系逐步稳定时，互相了解对家庭责任的期待。'],
+ '有定期照护安排，时间可协调':['照护是你生活的一部分，需要讨论时间如何安排。','整理自己固定需要的时间，以及可以协商的见面时段。'],
+ '有长期照护安排，需要提前沟通':['长期照护涉及共同生活安排，不是对个人或家庭的优劣评价。','整理照护所需时间、可获得的支持和希望对方理解的边界，再选择适当时机说明。'],
+ '尚不确定':['这部分安排还不明确，不需要现在作出结论。','先了解自己的责任和支持情况，再决定有哪些内容需要与伴侣沟通。']
+ };
+ if(careTips[a.care]) add('提前沟通家庭照护安排','care',...careTips[a.care]);
+ add('确认居住期待','housing','这是你目前对居住的倾向，实际安排需要双方协商。','聊聊独立空间、通勤与照护需求，分别说出必要条件和可协商部分。');
+ add('协调相处频率','lifestyle','你表达了希望联系和见面的节奏，可以和对方确认各自的需要。','分别说出工作日和休息日希望怎样联系，以及需要保留的个人时间。');
+ add('安排认识彼此的时间','work','这是你目前的生活节奏，不代表你投入关系的意愿。','找出近期可以安心交流的时段，提前说明加班、轮班或学习安排。');
+ add('把开支安排说清楚','finance','共同开支涉及双方的习惯与责任，不能仅凭收入判断。','用房租、日常开支或旅行预算等具体场景，讨论怎样分担更合适。');
+ add('讨论关系进度','timeline','这是你自己的时间期待，并不代表对方有相同计划。','在互有继续了解意愿后，问问对方的关系目标，确认节奏是否可以协商。');
+ add('确认生育议题','children','生育意愿是需要双方主动表达的议题，未确定时也可以如实说明。','在适当阶段直接交流各自的意愿和顾虑，不预设对方会改变想法。');
+ add('对齐定居方向','location','定居选择会影响共同生活，需要结合双方情况讨论。','分别说出目前工作、家庭和城市选择上的约束与可调整空间。');
+ add('把价值观放进具体场景','values','这些词代表你想重点了解的方向，实际含义可能因人而异。','从你选的一项出发，举一个日常场景，问问双方会如何处理。');
+ const strengths = answered(a.strength) ? a.strength.join('、') : answered(a.hobbies) ? a.hobbies.join('、') : '尚未填写个人特点或兴趣';
+ const summary = count ? '你已填写 '+count+' / '+QUESTIONS.length+' 项。'+(answered(a.focus)?'本次重点：'+a.focus+'。':'可以从下面的回答解读和行动清单开始。') : '你暂未填写回答。这里提供空白梳理框架；返回填写后，可以生成对应解读。';
+ const introParts = [];
+ if(answered(a.age)) introParts.push('我今年'+a.age+'岁。');
+ if(answered(a.city)) introParts.push('目前常住在'+a.city+'。');
+ if(answered(a.work)) introParts.push('工作与生活节奏是'+a.work+'。');
+ if(answered(a.hobbies)) introParts.push('平时喜欢'+a.hobbies.join('、')+'。');
+ if(answered(a.strength)) introParts.push('我觉得自己'+a.strength.join('、')+'。');
+ if(answered(a.values)) introParts.push('相处中，我比较看重'+a.values.join('、')+'。');
+ if(answered(a.timeline)) introParts.push('对关系的期待是：'+a.timeline+'。');
+ const actions = [
+ {time:'第 1—2 天',text:'整理择偶条件，给每项标注优先级；不确定的先留空。'},
+ {time:'第 3—4 天',text:answered(a.strength)?'为“'+a.strength[0]+'”补充一个真实故事，修改自我介绍。':'写下一个真实的生活片段，补充到自我介绍。'},
+ {time:'第 5—7 天',text:a.chat==='经常不知道怎么接话'?'练习一次具体追问，再分享一个自己的类似经历。':'准备三个真正好奇的问题，练习倾听和轮流分享。'},
+ {time:'第 8—10 天',text:answered(a.care)&&a.care!=='暂无固定照护安排'?'整理家庭照护安排中需要说明的时间、支持与边界。':'整理关于居住、开支和关系进度的期待，区分确定和待讨论部分。'},
+ {time:'第 11—14 天',text:'有见面机会时，记录相处是否轻松、是否被尊重、是否想继续；没有机会时，先用这三个问题复盘以往经历。'}
+ ];
+ const conversations = ['最近有哪些小事让你觉得开心？','你平时怎样安排工作、休息和自己的时间？','如果有意见不同的时候，你希望我们怎么沟通？'];
+ if(answered(a.hobbies)) conversations.unshift('你休息时喜欢做什么？我最近对'+a.hobbies[0]+'比较感兴趣。');
+ if(answered(a.timeline)) conversations.push('你目前希望以怎样的节奏认识一个人？');
+ return {count,summary,strengths,insights,intro:introParts.join('')||'我平时喜欢［补充一个真实兴趣］。相处中，我看重［补充自己的期待］。希望和你从［一种舒服的认识方式］开始了解。',actions,conversations};
+}
+function classifyPreferences(prefs) {
+ const groups = {'必须满足':[],'比较看重':[],'可以商量':[],'暂未分类':[]};
+ for(const field of PREFS) {
+  const p=prefs[field.id]||{}; let value='';
+  if(field.type==='range') {
+   const hasMin=answered(p.min),hasMax=answered(p.max);
+   if(hasMin||hasMax) {
+    const lo=hasMin?Number(p.min):null,hi=hasMax?Number(p.max):null;
+    if((hasMin&&(!Number.isFinite(lo)||!Number.isInteger(lo)||lo<field.min||lo>field.max))||(hasMax&&(!Number.isFinite(hi)||!Number.isInteger(hi)||hi<field.min||hi>field.max))) return {error:field.label+'请输入 '+field.min+'—'+field.max+' 之间的整数。'};
+    if(hasMin&&hasMax&&lo>hi)return {error:field.label+'的下限不能大于上限。'};
+    value=hasMin&&hasMax?lo+'—'+hi+field.unit:hasMin?lo+field.unit+'及以上':hi+field.unit+'及以下';
+   }
+  } else if(p.value&&p.value!=='暂不确定') value=p.value;
+  if(!value) {
+   if(p.priority&&p.priority!=='暂未分类')return {error:'请先填写“'+field.label+'”的条件，或将它设为“暂未分类”。'};
+   continue;
   }
-  function heightScore(gender, h) {
-    if (gender === 'male') {
-      if (h < 165) return 35; if (h < 170) return 52; if (h < 173) return 68;
-      if (h < 176) return 80; if (h < 180) return 90; if (h < 183) return 95;
-      if (h < 186) return 92; if (h < 190) return 85; return 80;
-    } else {
-      if (h < 155) return 48; if (h < 158) return 62; if (h < 160) return 75;
-      if (h < 163) return 85; if (h < 166) return 92; if (h < 168) return 95;
-      if (h < 170) return 90; if (h < 173) return 82; return 72;
-    }
+  const priority=PRIORITIES.includes(p.priority)?p.priority:'暂未分类';
+  groups[priority].push(field.label+'：'+value);
+ }
+ return {groups};
+}
+const api={QUESTIONS,PREFS,buildReport,classifyPreferences,escapeHTML};
+if(typeof module!=='undefined'&&module.exports)module.exports=api;
+if(typeof document==='undefined')return;
+const $=id=>document.getElementById(id);
+let answers={},index=0,isSample=false,report=null,preferences={},checks=[],draft='',draftEdited=false;
+function show(name) {
+ ['intro','quiz','result'].forEach(id=>$(id).hidden=id!==name);
+ window.scrollTo({top:0,behavior:'auto'});
+}
+function goQuestion() {
+ show('quiz');renderQuestion();
+}
+function renderQuestion() {
+ const q=QUESTIONS[index],value=answers[q.id];
+ $('section-label').textContent=q.section;$('question-count').textContent=(index+1)+' / '+QUESTIONS.length;
+ $('progress').value=index+1;
+ let content='<fieldset><legend id="question-title" tabindex="-1">'+escapeHTML(q.title)+'</legend><p class="question-hint">'+escapeHTML(q.hint||'选一个最贴近目前情况的选项，也可以跳过。')+'</p>';
+ if(q.type==='number'||q.type==='text') {
+  content+='<div class="question-number"><input id="answer-input" aria-labelledby="question-title" type="'+q.type+'" value="'+escapeHTML(value||'')+'" '+(q.type==='number'?'min="'+q.min+'" max="'+q.max+'" step="1" inputmode="numeric"':'maxlength="'+q.max+'" placeholder="'+escapeHTML(q.placeholder)+'"')+'>'+escapeHTML(q.unit||'')+'</div>';
+ } else {
+  content+='<div class="options">';
+  q.options.forEach((opt,i)=>{
+   const selected=q.type==='multi'?Array.isArray(value)&&value.includes(opt):value===opt;
+   content+='<label class="option"><input type="'+(q.type==='multi'?'checkbox':'radio')+'" name="answer" value="'+i+'" '+(selected?'checked':'')+'><span>'+escapeHTML(opt)+'</span></label>';
+  });content+='</div>';
+ }
+ content+='</fieldset><p id="question-error" class="error" role="alert"></p>';
+ $('question').innerHTML=content;
+ $('previous').disabled=index===0;$('next').textContent=index===QUESTIONS.length-1?'生成我的报告':'下一题';
+ $('question').querySelectorAll('input').forEach(input=>input.addEventListener('input',()=> {
+  if(q.type==='multi') {
+   const selected=[...$('question').querySelectorAll('input:checked')];
+   if(selected.length>3){input.checked=false;$('question-error').textContent='最多选择 3 项。';return;}
   }
-  var CITY_SCARCITY = { '一线(北上广深)': 68, '新一线': 74, '二线': 82, '三四线及以下': 88 };
-
-  // ============================================================
-  // 维度定义(含口语化文案 + 过渡幕文案)
-  // ============================================================
-  var DIMENSIONS = [
-    {
-      id: 'hardware', name: '个人硬件', roman: 'I',
-      essay: '硬件是相亲市场的入场券。它最直观,也最容易被量化——但记住,峰值不在最年轻最富有的那一端。',
-      questions: [
-        { id: 'age', type: 'range', title: '你今年多大啦？', hint: '年龄在市场里是条曲线,不是越小越好哦',
-          min: 18, max: 50, step: 1, unit: '岁', def: 25, defFemale: 24 },
-        { id: 'height', type: 'range', title: '身高报一下？', hint: '放心,这关有偏好区间,不是越高越好',
-          min: 155, max: 200, step: 1, unit: 'cm', def: 175, minF: 145, maxF: 185, defF: 162 },
-        { id: 'looks', type: 'range', title: '给自己长相打个分？', hint: '结合别人夸你的频率,客观点~系统会做校正',
-          min: 1, max: 10, step: 1, unit: '分', def: 6,
-          scaleLabels: ['1', '4 中下', '6 还行', '8 出众', '10 极品'] },
-        { id: 'bodyType', type: 'single', title: '身材体型怎么样？', hint: '',
-          options: [
-            { t: '匀称标准', s: 82 }, { t: '健身有型/有线条', s: 90 },
-            { t: '偏瘦', s: 64 }, { t: '微胖圆润', s: 58 },
-            { t: '偏壮/结实', sm: 66, sf: 52 }
-          ] },
-        { id: 'education', type: 'single', title: '书读到哪一步了？', hint: '',
-          options: [
-            { t: '高中及以下', s: 32 }, { t: '大专', s: 44 }, { t: '普通本科', s: 58 },
-            { t: '重点本科(一本/211)', s: 74 }, { t: '985/双一流本科', s: 86 },
-            { t: '普通院校硕士', s: 70 }, { t: '985/名校硕士', s: 84 }, { t: '博士', s: 82 }
-          ] },
-        { id: 'income', type: 'single', title: '每个月到手大概多少？', hint: '',
-          options: [
-            { t: '5千以下', sm: 30, sf: 42 }, { t: '5千 - 8千', sm: 42, sf: 54 },
-            { t: '8千 - 1.2万', sm: 54, sf: 64 }, { t: '1.2万 - 1.8万', sm: 66, sf: 74 },
-            { t: '1.8万 - 2.5万', sm: 76, sf: 82 }, { t: '2.5万 - 4万', sm: 86, sf: 88 },
-            { t: '4万 - 6万', sm: 92, sf: 92 }, { t: '6万以上', sm: 96, sf: 95 }
-          ] },
-        { id: 'asset', type: 'single', title: '房和车,现在什么情况？', hint: '',
-          options: [
-            { t: '一线城市有房(无贷)', s: 95 }, { t: '一线城市有房(有贷)', s: 80 },
-            { t: '二线城市有房(无贷)', s: 88 }, { t: '二线城市有房(有贷)', s: 74 },
-            { t: '有车且有可观存款', s: 64 }, { t: '只有车', s: 52 },
-            { t: '没房没车但有存款', s: 46 }, { t: '暂无房车存款', s: 32 }
-          ] },
-        { id: 'grooming', type: 'range', title: '平时的穿搭打扮用心吗？', hint: '外在打理程度,发型/穿搭/干净整洁',
-          min: 1, max: 10, step: 1, unit: '分', def: 5,
-          scaleLabels: ['1 邋遢随意', '4 基本整洁', '6 还行', '8 会穿搭', '10 精致达人'] }
-      ]
-    },
-    {
-      id: 'soft', name: '软实力', roman: 'II',
-      essay: '硬件决定你能不能被看见,软实力决定你能不能被留下。这一part,请你对自己诚实一点。',
-      questions: [
-        { id: 'eq', type: 'range', title: '聊天时你算接梗王吗？', hint: '读懂空气、接住情绪的能力',
-          min: 1, max: 10, step: 1, unit: '分', def: 6, scaleLabels: ['1 话题终结者', '4 偶尔接得上', '6 还行', '8 接梗王', '10 高情商'] },
-        { id: 'emotional', type: 'range', title: '遇到破事你能稳住吗？', hint: '情绪稳定性,越不容易炸分越高',
-          min: 1, max: 10, step: 1, unit: '分', def: 6, scaleLabels: ['1 一点就着', '4 有点容易崩', '6 一般', '8 很稳', '10 佛系本佛'] },
-        { id: 'hobby', type: 'range', title: '下班后的生活有料吗？', hint: '兴趣爱好的丰富度',
-          min: 1, max: 10, step: 1, unit: '分', def: 5, scaleLabels: ['1 只会刷手机', '4 偶尔有活动', '6 还行', '8 挺丰富', '10 生活家'] },
-        { id: 'lifestyle', type: 'range', title: '你的生活有质感吗？', hint: '审美、自律、讲究程度',
-          min: 1, max: 10, step: 1, unit: '分', def: 5, scaleLabels: ['1 凑合过', '4 略讲究', '6 还行', '8 有品味', '10 质感拉满'] },
-        { id: 'values', type: 'range', title: '你能接受和你很不一样的人吗？', hint: '包容度,不偏执、能求同存异',
-          min: 1, max: 10, step: 1, unit: '分', def: 6, scaleLabels: ['1 必须同频', '4 有点挑', '6 一般', '8 挺开放', '10 海纳百川'] },
-        { id: 'humor', type: 'range', title: '你算有趣的人吗？', hint: '幽默感,能不能逗人开心、制造氛围',
-          min: 1, max: 10, step: 1, unit: '分', def: 5, scaleLabels: ['1 无趣无聊', '4 偶尔有趣', '6 还行', '8 挺好玩', '10 开心果'] },
-        { id: 'ambition', type: 'range', title: '你对未来有冲劲吗？', hint: '上进心和事业野心',
-          min: 1, max: 10, step: 1, unit: '分', def: 6, scaleLabels: ['1 躺平了', '4 随缘', '6 还行', '8 有目标', '10 卷王之王'] }
-      ]
-    },
-    {
-      id: 'family', name: '家庭背景', roman: 'III',
-      essay: '相亲市场的隐形筹码。它不写在自我介绍里,但对方一定会打听——因为它关乎未来生活的底色。',
-      questions: [
-        { id: 'familyWealth', type: 'single', title: '家里经济条件怎么样？', hint: '',
-          options: [
-            { t: '富裕(家里有矿那种)', s: 92 }, { t: '小康(中产,没压力)', s: 78 },
-            { t: '普通(够用,精打细算)', s: 60 }, { t: '拘谨(略有点紧)', s: 44 },
-            { t: '困难(需要反哺家里)', s: 30 }
-          ] },
-        { id: 'parents', type: 'single', title: '父母那边需要你操心吗？', hint: '',
-          options: [
-            { t: '退休有保障,不用操心', s: 90 }, { t: '还在上班,未来有保障', s: 82 },
-            { t: '需要赡养但压力可控', s: 66 }, { t: '健康需要长期照护', s: 48 },
-            { t: '单亲/家庭负担比较重', s: 40 }
-          ] },
-        { id: 'hukouCity', type: 'single', title: '你户口在哪种地方？', hint: '',
-          options: [
-            { t: '一线(北上广深)', s: 88 }, { t: '新一线(杭蓉汉宁等)', s: 80 },
-            { t: '二线', s: 70 }, { t: '三四线', s: 58 }, { t: '县城/农村', s: 46 }
-          ] },
-        { id: 'socialNet', type: 'range', title: '你的朋友圈子广吗？', hint: '人脉的广度和质量',
-          min: 1, max: 10, step: 1, unit: '分', def: 5, scaleLabels: ['1 社恐本恐', '4 几个好友', '6 还行', '8 交友广泛', '10 社交达人'] },
-        { id: 'onlyChild', type: 'single', title: '你是独生子女吗？', hint: '',
-          options: [
-            { t: '独生子女', s: 78 }, { t: '有一个兄弟姐妹', s: 80 },
-            { t: '两个以上兄弟姐妹', s: 70 }, { t: '老大(有弟妹)', s: 74 },
-            { t: '老幺(有兄姐)', s: 76 }
-          ] },
-        { id: 'parentsMarriage', type: 'single', title: '父母婚姻状况怎么样？', hint: '',
-          options: [
-            { t: '原配,感情很好', s: 90 }, { t: '原配,凑合过', s: 74 },
-            { t: '离异,各自安好', s: 62 }, { t: '离异,有矛盾', s: 44 },
-            { t: '一方已故', s: 58 }
-          ] }
-      ]
-    },
-    {
-      id: 'market', name: '市场供需', roman: 'IV',
-      essay: '最后这一关最扎心。定位不只看你有多好,更看你在所处的池子里稀缺不稀缺,以及——你的眼光够不够现实。',
-      questions: [
-        { id: 'liveCity', type: 'single', title: '你长住在哪种城市？', hint: '',
-          options: [
-            { t: '一线(北上广深)' }, { t: '新一线' }, { t: '二线' }, { t: '三四线及以下' }
-          ] },
-        { id: 'expectations', type: 'multi', title: '找对象你最看重啥？', hint: '最多选3个,选得越多匹配池越小',
-          max: 3,
-          options: [
-            { t: '长相身材出众', base: 10 }, { t: '高收入/有钱', base: 10 },
-            { t: '高学历', base: 7 }, { t: '身高要够', base: 7 },
-            { t: '家庭条件相当', base: 7 }, { t: '情绪稳定性格好', base: 4 },
-            { t: '三观合得来', base: 4 }, { t: '有上进心', base: 4 },
-            { t: '会照顾人/顾家', base: 4 }
-          ] },
-        { id: 'competition', type: 'range', title: '身边同龄人卷得厉害吗？', hint: '竞争压力越大,你的相对空间越小',
-          min: 1, max: 10, step: 1, unit: '分', def: 6,
-          scaleLabels: ['1 很佛', '4 还好', '6 一般卷', '8 挺卷', '10 卷王之王'] },
-        { id: 'marriagePlan', type: 'single', title: '你打算什么时候结婚？', hint: '时间紧迫度影响市场议价权',
-          options: [
-            { t: '越快越好,急着结', s: 58 }, { t: '1-2年内', s: 78 },
-            { t: '2-3年内,顺其自然', s: 84 }, { t: '3-5年内', s: 76 },
-            { t: '没想好,看缘分', s: 64 }
-          ] }
-      ]
-    }
-  ];
-
-  // 扁平化题目流 + 标记维度边界
-  var quizFlow = [];
-  DIMENSIONS.forEach(function (dim) {
-    dim.questions.forEach(function (q, qi) {
-      quizFlow.push({ dimId: dim.id, dimName: dim.name, dimRoman: dim.roman, dimEssay: dim.essay, q: q, qi: qi, isFirstOfDim: qi === 0 });
-    });
-  });
-  var TOTAL_Q = quizFlow.length;
-
-  // ============================================================
-  // 状态
-  // ============================================================
-  var state = { gender: null, flowIdx: 0, answers: {}, inTransition: false };
-  var seenTransitions = {};
-
-  // ============================================================
-  // DOM
-  // ============================================================
-  var $ = function (id) { return document.getElementById(id); };
-  var screens = { intro: $('screen-intro'), quiz: $('screen-quiz'), result: $('screen-result') };
-
-  function showScreen(name) {
-    Object.keys(screens).forEach(function (k) { screens[k].classList.toggle('active', k === name); });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('question-error').textContent='';
+ }));
+ $('question-title').focus();
+}
+function saveAnswer() {
+ const q=QUESTIONS[index];let value;
+ if(q.type==='text'||q.type==='number') {
+  value=$('answer-input').value.trim();
+  if(q.type==='number'&&value!=='') {
+   const n=Number(value);
+   if(!Number.isInteger(n)||n<q.min||n>q.max){$('question-error').textContent='请输入 '+q.min+'—'+q.max+' 之间的整数，或选择暂不填写。';return false;}
+   value=n;
   }
-
-  // ============================================================
-  // 开场
-  // ============================================================
-  var genderCards = document.querySelectorAll('.gender-card');
-  genderCards.forEach(function (card) {
-    card.addEventListener('click', function () {
-      genderCards.forEach(function (c) { c.classList.remove('selected'); });
-      card.classList.add('selected');
-      state.gender = card.getAttribute('data-gender');
-      $('btn-start').disabled = false;
-    });
-  });
-
-  $('btn-start').addEventListener('click', function () {
-    if (!state.gender) return;
-    // 初始化滑块默认值(按性别)
-    DIMENSIONS.forEach(function (dim) {
-      dim.questions.forEach(function (q) {
-        if (q.type === 'range' && state.answers[q.id] === undefined) {
-          var def = q.def;
-          if (state.gender === 'female' && q.defFemale !== undefined) def = q.defFemale;
-          state.answers[q.id] = def;
-        }
-      });
-    });
-    state.flowIdx = 0;
-    state.inTransition = false;
-    seenTransitions = {};
-    renderCurrent();
-    showScreen('quiz');
-  });
-
-  // ============================================================
-  // 渲染当前题(或维度过渡幕)
-  // ============================================================
-  function renderCurrent() {
-    var item = quizFlow[state.flowIdx];
-    var pct = Math.round((state.flowIdx / TOTAL_Q) * 100);
-
-    $('progress-fill').style.width = Math.max(pct, 4) + '%';
-    $('dim-tag').textContent = item.dimName;
-    $('q-count').textContent = pad(state.flowIdx + 1) + ' / ' + pad(TOTAL_Q);
-    renderDimDots(item);
-
-    var stage = $('q-stage');
-
-    // 维度过渡幕(每个维度第一题之前,且非第一题,且未看过)
-    if (item.isFirstOfDim && state.flowIdx !== 0 && !seenTransitions[state.flowIdx]) {
-      seenTransitions[state.flowIdx] = true;
-      state.inTransition = true;
-      renderTransition(item, stage);
-      $('btn-next').textContent = '进入';
-      $('btn-next').disabled = false;
-      $('btn-prev').style.visibility = state.flowIdx === 0 ? 'hidden' : 'visible';
-      $('quiz-tip').textContent = '准备好了就进入下一维度';
-      return;
-    }
-
-    state.inTransition = false;
-    // 正常题目
-    renderQuestion(item, stage);
-    $('btn-next').textContent = state.flowIdx === TOTAL_Q - 1 ? '生成报告' : '下一题';
-    $('btn-prev').style.visibility = state.flowIdx === 0 ? 'hidden' : 'visible';
-    // 根据题型更新底部提示
-    var tipEl = $('quiz-tip');
-    if (item.q.type === 'range') tipEl.textContent = '拖动滑块到最贴近你的位置';
-    else if (item.q.type === 'multi') tipEl.textContent = '可多选,但选越多匹配池越小';
-    else tipEl.textContent = '选一个最贴近你的选项';
-    updateNextState();
-  }
-
-  function renderDimDots(item) {
-    var dims = ['hardware', 'soft', 'family', 'market'];
-    var colors = ['var(--accent)', 'var(--mint)', 'var(--lilac)', 'var(--gold)'];
-    var html = '';
-    dims.forEach(function (d, i) {
-      var cls = 'dd';
-      if (d === item.dimId) cls += ' active';
-      else if (dims.indexOf(item.dimId) > i) cls += ' done';
-      html += '<span class="' + cls + '" style="' + (d === item.dimId ? 'background:' + colors[i] : '') + '"></span>';
-    });
-    $('dim-dots').innerHTML = html;
-  }
-
-  function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
-  function renderTransition(item, stage) {
-    stage.innerHTML =
-      '<div class="dim-transition q-anim">' +
-      '<div class="dt-roman">' + item.dimRoman + '</div>' +
-      '<div class="dt-name">' + item.dimName + '</div>' +
-      '<div class="ornament"><span class="dot"></span></div>' +
-      '<p class="dt-essay">' + item.dimEssay + '</p>' +
-      '</div>';
-  }
-
-  function renderQuestion(item, stage) {
-    var q = item.q;
-    var html = '<div class="q-anim">';
-    html += '<div class="q-prompt">' + item.dimName + ' · ' + (item.qi + 1) + '</div>';
-    html += '<div class="q-title">' + q.title + '</div>';
-    if (q.hint) html += '<div class="q-hint">' + q.hint + '</div>';
-
-    if (q.type === 'range') {
-      var min = q.min, max = q.max, def = state.answers[q.id] !== undefined ? state.answers[q.id] : q.def;
-      if (state.gender === 'female' && q.minF !== undefined) { min = q.minF; max = q.maxF; }
-      var desc = rangeDesc(q.id, def);
-      html += '<div class="range-display">';
-      html += '<div class="range-val" id="rv-' + q.id + '">' + def + '<span class="unit">' + q.unit + '</span></div>';
-      html += '<div class="range-desc" id="rdesc-' + q.id + '">' + desc + '</div>';
-      html += '</div>';
-      html += '<input type="range" id="rg-' + q.id + '" min="' + min + '" max="' + max + '" step="' + q.step + '" value="' + def + '">';
-      if (q.scaleLabels) {
-        html += '<div class="range-scale">' + q.scaleLabels.map(function (l) { return '<span>' + l + '</span>'; }).join('') + '</div>';
-      } else {
-        html += '<div class="range-scale"><span>' + min + '</span><span>' + max + '</span></div>';
-      }
-    } else if (q.type === 'single') {
-      var cols = q.options.length <= 5 ? ' cols2' : '';
-      html += '<div class="opt-list' + cols + '">';
-      q.options.forEach(function (opt, i) {
-        var sel = state.answers[q.id] === i ? ' selected' : '';
-        html += '<div class="opt' + sel + '" data-q="' + q.id + '" data-i="' + i + '"><span class="marker"></span><span>' + opt.t + '</span></div>';
-      });
-      html += '</div>';
-    } else if (q.type === 'multi') {
-      var chosen = state.answers[q.id] || [];
-      var maxed = chosen.length >= q.max;
-      html += '<div class="opt-list">';
-      q.options.forEach(function (opt, i) {
-        var sel = chosen.indexOf(i) > -1 ? ' selected' : '';
-        var dis = (!sel && maxed) ? ' disabled' : '';
-        html += '<div class="opt multi' + sel + dis + '" data-q="' + q.id + '" data-i="' + i + '"><span class="marker"></span><span>' + opt.t + '</span></div>';
-      });
-      html += '</div>';
-      html += '<div class="multi-counter">已选 ' + chosen.length + ' / ' + q.max + '</div>';
-    }
-    html += '</div>';
-    stage.innerHTML = html;
-    bindQuestion(q);
-  }
-
-  // 滑块实时描述(钓性文案)
-  function rangeDesc(id, v) {
-    var map = {
-      age: v < 24 ? '鲜肉年纪' : v < 28 ? '黄金期' : v < 33 ? '正当年' : v < 38 ? '成熟魅力' : v < 45 ? '阅历丰富' : '岁月沉淀',
-      height: v < 162 ? '娇小可人' : v < 170 ? '刚刚好' : v < 180 ? '高挑有型' : v < 185 ? '气场十足' : '高个子',
-      looks: v <= 3 ? '朴素低调' : v <= 5 ? '清秀耐看' : v <= 7 ? '挺招人喜欢' : v <= 9 ? '回头率很高' : '天花板级别',
-      grooming: v <= 3 ? '邋遢随意' : v <= 5 ? '基本整洁' : v <= 7 ? '还挺会穿' : v <= 9 ? '穿搭达人' : '精致天花板',
-      eq: v <= 3 ? '话题终结者' : v <= 5 ? '偶尔接得上' : v <= 7 ? '聊得来' : v <= 9 ? '接梗王' : '高情商选手',
-      emotional: v <= 3 ? '一点就着' : v <= 5 ? '有点容易崩' : v <= 7 ? '基本能稳住' : v <= 9 ? '很稳' : '佛系本佛',
-      hobby: v <= 3 ? '手机党' : v <= 5 ? '偶尔有活动' : v <= 7 ? '生活挺充实' : v <= 9 ? '玩法很多' : '生活家本家',
-      lifestyle: v <= 3 ? '凑合过' : v <= 5 ? '略讲究' : v <= 7 ? '有质感' : v <= 9 ? '很有品味' : '质感拉满',
-      values: v <= 3 ? '必须同频' : v <= 5 ? '有点挑' : v <= 7 ? '挺开放' : v <= 9 ? '很包容' : '海纳百川',
-      humor: v <= 3 ? '有点无聊' : v <= 5 ? '偶尔有趣' : v <= 7 ? '还挺好玩' : v <= 9 ? '很有趣' : '开心果本果',
-      ambition: v <= 3 ? '躺平了' : v <= 5 ? '随缘' : v <= 7 ? '有干劲' : v <= 9 ? '很有野心' : '卷王本王',
-      socialNet: v <= 3 ? '社恐本恐' : v <= 5 ? '几个好友' : v <= 7 ? '圈子还行' : v <= 9 ? '交友广泛' : '社交达人',
-      competition: v <= 3 ? '很佛系' : v <= 5 ? '还好' : v <= 7 ? '有点卷' : v <= 9 ? '挺卷' : '卷王之王'
-    };
-    return map[id] || '';
-  }
-
-  function bindQuestion(q) {
-    if (q.type === 'range') {
-      var rg = $('rg-' + q.id);
-      var rv = $('rv-' + q.id);
-      var rdesc = $('rdesc-' + q.id);
-      rg.addEventListener('input', function () {
-        state.answers[q.id] = Number(rg.value);
-        rv.innerHTML = rg.value + '<span class="unit">' + q.unit + '</span>';
-        rdesc.textContent = rangeDesc(q.id, Number(rg.value));
-        updateNextState();
-      });
-    } else {
-      var opts = document.querySelectorAll('.opt[data-q="' + q.id + '"]');
-      opts.forEach(function (el) {
-        el.addEventListener('click', function () {
-          if (el.classList.contains('disabled')) return;
-          var i = Number(el.getAttribute('data-i'));
-          if (q.type === 'single') {
-            state.answers[q.id] = i;
-            opts.forEach(function (o) { o.classList.remove('selected'); });
-            el.classList.add('selected');
-          } else {
-            var chosen = state.answers[q.id] || [];
-            var pos = chosen.indexOf(i);
-            if (pos > -1) { chosen.splice(pos, 1); el.classList.remove('selected'); }
-            else { if (chosen.length >= q.max) return; chosen.push(i); el.classList.add('selected'); }
-            state.answers[q.id] = chosen;
-            // 刷新计数和disabled
-            var counter = document.querySelector('.multi-counter');
-            if (counter) counter.textContent = '已选 ' + chosen.length + ' / ' + q.max;
-            var maxed = chosen.length >= q.max;
-            document.querySelectorAll('.opt[data-q="' + q.id + '"]').forEach(function (o) {
-              if (!o.classList.contains('selected')) o.classList.toggle('disabled', maxed);
-            });
-          }
-          updateNextState();
-        });
-      });
-    }
-  }
-
-  function updateNextState() {
-    var item = quizFlow[state.flowIdx];
-    if (state.inTransition) { $('btn-next').disabled = false; return; }
-    var q = item.q;
-    var done = false;
-    if (q.type === 'range') done = state.answers[q.id] !== undefined;
-    else if (q.type === 'single') done = state.answers[q.id] !== undefined;
-    else if (q.type === 'multi') done = Array.isArray(state.answers[q.id]) && state.answers[q.id].length > 0;
-    $('btn-next').disabled = !done;
-  }
-
-  $('btn-prev').addEventListener('click', function () {
-    if (state.inTransition) {
-      // 过渡幕时点"上一题"→回到上一题
-      state.inTransition = false;
-      state.flowIdx--;
-      renderCurrent();
-      return;
-    }
-    if (state.flowIdx > 0) {
-      state.flowIdx--;
-      renderCurrent();
-    }
-  });
-
-  $('btn-next').addEventListener('click', function () {
-    if ($('btn-next').disabled) return;
-    if (state.inTransition) {
-      // 过渡幕"进入"→显示当前维度第一题(flowIdx 不变)
-      renderCurrent();
-      return;
-    }
-    if (state.flowIdx < TOTAL_Q - 1) {
-      state.flowIdx++;
-      renderCurrent();
-    } else {
-      $('progress-fill').style.width = '100%';
-      showScreen('result');
-      computeAndRenderResult();
-    }
-  });
-
-  $('btn-restart').addEventListener('click', function () {
-    state.gender = null; state.flowIdx = 0; state.answers = {}; state.inTransition = false;
-    seenTransitions = {};
-    genderCards.forEach(function (c) { c.classList.remove('selected'); });
-    $('btn-start').disabled = true;
-    showScreen('intro');
-  });
-
-  // ============================================================
-  // 评分计算
-  // ============================================================
-  function findQ(qid) {
-    for (var d = 0; d < DIMENSIONS.length; d++) {
-      for (var i = 0; i < DIMENSIONS[d].questions.length; i++) {
-        if (DIMENSIONS[d].questions[i].id === qid) return DIMENSIONS[d].questions[i];
-      }
-    }
-    return null;
-  }
-  function optScore(q, i) {
-    var opt = q.options[i];
-    if (opt.sm !== undefined) return state.gender === 'male' ? opt.sm : opt.sf;
-    return opt.s;
-  }
-
-  function compute() {
-    var g = state.gender, a = state.answers, dw = DIM_WEIGHTS[g];
-
-    var hwScores = {
-      age: ageScore(g, a.age), height: heightScore(g, a.height), looks: sliderScore(a.looks),
-      education: optScore(findQ('education'), a.education),
-      income: optScore(findQ('income'), a.income),
-      asset: optScore(findQ('asset'), a.asset),
-      bodyType: optScore(findQ('bodyType'), a.bodyType),
-      grooming: sliderScore(a.grooming)
-    };
-    var hwW = HW_WEIGHTS[g], hardware = 0;
-    Object.keys(hwW).forEach(function (k) { hardware += hwScores[k] * hwW[k]; });
-
-    var softScores = {
-      eq: sliderScore(a.eq), emotional: sliderScore(a.emotional), hobby: sliderScore(a.hobby),
-      lifestyle: sliderScore(a.lifestyle), values: sliderScore(a.values),
-      humor: sliderScore(a.humor), ambition: sliderScore(a.ambition)
-    };
-    var soft = 0;
-    Object.keys(SOFT_WEIGHTS).forEach(function (k) { soft += softScores[k] * SOFT_WEIGHTS[k]; });
-
-    var famScores = {
-      familyWealth: optScore(findQ('familyWealth'), a.familyWealth),
-      parents: optScore(findQ('parents'), a.parents),
-      hukouCity: optScore(findQ('hukouCity'), a.hukouCity),
-      socialNet: sliderScore(a.socialNet),
-      onlyChild: optScore(findQ('onlyChild'), a.onlyChild),
-      parentsMarriage: optScore(findQ('parentsMarriage'), a.parentsMarriage)
-    };
-    var family = 0;
-    Object.keys(FAM_WEIGHTS).forEach(function (k) { family += famScores[k] * FAM_WEIGHTS[k]; });
-
-    // 市场供需
-    var liveCityOpt = findQ('liveCity').options[a.liveCity].t;
-    var cityScarcity = CITY_SCARCITY[liveCityOpt];
-    var threeW = dw.hardware + dw.soft + dw.family;
-    var competitiveness = (hardware * dw.hardware + soft * dw.soft + family * dw.family) / threeW;
-    var competitivenessAdj = competitiveness * 0.95 + 3;
-
-    var expQ = findQ('expectations');
-    var chosenExp = a.expectations || [];
-    var expectPenalty = chosenExp.reduce(function (sum, i) { return sum + expQ.options[i].base; }, 0);
-    var supportBonus = competitivenessAdj > 78 ? 12 : competitivenessAdj > 68 ? 6 : competitivenessAdj >= 55 ? 0 : -8;
-    var matchRaw = 100 - expectPenalty + supportBonus;
-    var matchCoef = clamp(competitivenessAdj / 75, 0.4, 1.1);
-    var matchPossibility = clamp(matchRaw * matchCoef, 20, 96);
-
-    var compScore = clamp((11 - a.competition) * 8 + 12, 25, 90);
-    var market = competitivenessAdj * 0.45 + matchPossibility * 0.30 + cityScarcity * 0.15 + compScore * 0.10;
-
-    var total = hardware * dw.hardware + soft * dw.soft + family * dw.family + market * dw.market;
-    var percentile = clamp(Math.round(100 / (1 + Math.exp(-(total - 58) / 7))), 1, 99);
-
-    var allItems = [
-      { name: '年龄', score: hwScores.age, dim: '硬件' }, { name: '身高', score: hwScores.height, dim: '硬件' },
-      { name: '外貌', score: hwScores.looks, dim: '硬件' }, { name: '体型', score: hwScores.bodyType, dim: '硬件' },
-      { name: '学历', score: hwScores.education, dim: '硬件' }, { name: '收入', score: hwScores.income, dim: '硬件' },
-      { name: '资产', score: hwScores.asset, dim: '硬件' }, { name: '穿搭打扮', score: hwScores.grooming, dim: '硬件' },
-      { name: '情商沟通', score: softScores.eq, dim: '软实力' }, { name: '情绪稳定', score: softScores.emotional, dim: '软实力' },
-      { name: '兴趣丰富', score: softScores.hobby, dim: '软实力' }, { name: '生活品味', score: softScores.lifestyle, dim: '软实力' },
-      { name: '价值观包容', score: softScores.values, dim: '软实力' }, { name: '幽默感', score: softScores.humor, dim: '软实力' },
-      { name: '上进心', score: softScores.ambition, dim: '软实力' },
-      { name: '家庭经济', score: famScores.familyWealth, dim: '家庭' }, { name: '父母状况', score: famScores.parents, dim: '家庭' },
-      { name: '户籍地域', score: famScores.hukouCity, dim: '家庭' }, { name: '社会关系', score: famScores.socialNet, dim: '家庭' },
-      { name: '独生子女', score: famScores.onlyChild, dim: '家庭' }, { name: '父母婚姻', score: famScores.parentsMarriage, dim: '家庭' },
-      { name: '市场供需', score: market, dim: '市场' }
-    ];
-
-    return {
-      gender: g, dims: { hardware: hardware, soft: soft, family: family, market: market },
-      dimWeights: dw, total: total, percentile: percentile, items: allItems,
-      market: { competitiveness: competitivenessAdj, matchPossibility: matchPossibility, cityScarcity: cityScarcity, compScore: compScore, expectPenalty: expectPenalty },
-      expectations: chosenExp.map(function (i) { return expQ.options[i].t; })
-    };
-  }
-
-  function gradeInfo(total) {
-    if (total >= 88) return { grade: 'S 级', label: '头部稀缺资源', color: 'var(--gold)',
-      desc: '你处在相亲市场的顶端。综合条件稀缺,选择权在你手里,是各路相亲资源争相推荐的对象。' };
-    if (total >= 78) return { grade: 'A 级', label: '优质热门选手', color: 'var(--accent)',
-      desc: '你有明显的市场竞争力,大多数相亲场合都属于被优先考虑的人选,主动权较强。' };
-    if (total >= 68) return { grade: 'B+ 级', label: '中上稳健型', color: 'var(--accent)',
-      desc: '你的综合条件高于平均,有稳定的吸引力。精准定位与策略优化能让你进入更优质的圈层。' };
-    if (total >= 58) return { grade: 'B 级', label: '中等市场主力', color: 'var(--berry)',
-      desc: '你处在相亲市场的主力区间。条件均衡但缺乏显著差异化优势,需要靠亮点突破或调整预期提升匹配效率。' };
-    if (total >= 48) return { grade: 'C 级', label: '中下待提升', color: 'var(--berry)',
-      desc: '你的竞争力暂时偏弱。建议聚焦核心短板的提升,或调整择偶预期扩大匹配池,避免长期消耗。' };
-    return { grade: 'D 级', label: '需重点突围', color: 'var(--muted)',
-      desc: '当前市场定位面临较大挑战。建议系统性地提升硬件或软实力,同时重新评估市场策略与预期。' };
-  }
-
-  // ============================================================
-  // 渲染结果
-  // ============================================================
-  function computeAndRenderResult() {
-    try {
-      var r = compute(), g = gradeInfo(r.total), scoreRound = Math.round(r.total);
-      var dimNames = { hardware: '个人硬件', soft: '软实力', family: '家庭背景', market: '市场供需' };
-
-      var html = '<div class="result-cover">';
-      html += '<span class="result-grade" style="color:' + g.color + '">' + g.grade + ' · 前 ' + r.percentile + '%</span>';
-      html += '<div class="result-score">' + scoreRound + '<span class="max"> / 100</span></div>';
-      html += '<div class="result-label">' + g.label + '</div>';
-      html += '<div class="result-pct">在同龄同性市场池中,综合竞争力约领先 <strong>' + r.percentile + '%</strong> 的人</div>';
-      html += '</div>';
-
-      html += '<figure class="chart-figure"><figcaption>四维竞争力雷达</figcaption><div id="chart-radar"></div></figure>';
-
-      html += '<div class="dim-cards">';
-      ['hardware', 'soft', 'family', 'market'].forEach(function (k) {
-        var s = r.dims[k], sr = Math.round(s), w = Math.round(r.dimWeights[k] * 100);
-        html += '<div class="dim-card"><div class="dc-head"><span class="dc-name">' + dimNames[k] + '</span><span class="dc-w">权重 ' + w + '%</span></div>';
-        html += '<div class="dc-score">' + sr + '</div><div class="dc-bar"><div class="dc-bar-fill" style="width:' + sr + '%"></div></div>';
-        html += '<div class="dc-note">' + dimNote(k, s) + '</div></div>';
-      });
-      html += '</div>';
-
-      var sorted = r.items.slice().sort(function (a, b) { return b.score - a.score; });
-      var top3 = sorted.slice(0, 3), bottom3 = sorted.slice(-3).reverse();
-
-      html += '<div class="result-section"><h3>你的杀手锏 <span class="pill pill-up">TOP 3</span></h3><div class="insight-list">';
-      top3.forEach(function (it, i) { html += insightItem(it, i + 1, true); });
-      html += '</div></div>';
-
-      html += '<div class="result-section"><h3>拖后腿的 <span class="pill pill-down">需关注</span></h3><div class="insight-list">';
-      bottom3.forEach(function (it, i) { html += insightItem(it, i + 1, false); });
-      html += '</div></div>';
-
-      html += '<div class="result-section"><h3>市场定位分析</h3><div class="analysis-block">' + buildAnalysis(r, g) + '</div></div>';
-
-      // 市场指标仪表盘
-      html += '<div class="result-section"><h3>市场关键指标</h3><div class="market-gauge">';
-      html += buildGaugeRow('同池竞争力', r.market.competitiveness, 'var(--accent)');
-      html += buildGaugeRow('匹配可能性', r.market.matchPossibility, 'var(--mint)');
-      html += buildGaugeRow('城市稀缺度', r.market.cityScarcity, 'var(--lilac)');
-      html += buildGaugeRow('竞争缓冲', r.market.compScore, 'var(--gold)');
-      html += '</div></div>';
-
-      // 全项明细表
-      html += '<div class="result-section"><h3>全项得分明细 <span class="pill" style="color:var(--muted);border-color:var(--rule);">22项</span></h3>';
-      html += '<table class="breakdown-table"><thead><tr><th>指标</th><th>维度</th><th class="bd-bar">水平</th><th style="text-align:right">得分</th></tr></thead><tbody>';
-      sorted.forEach(function (it) {
-        var sr = Math.round(it.score);
-        html += '<tr><td class="bd-name">' + it.name + '</td><td style="color:var(--muted);font-size:0.76rem">' + it.dim + '</td>';
-        html += '<td class="bd-bar"><div class="bd-mini-bar"><div class="bd-mini-bar-fill" style="width:' + sr + '%"></div></div></td>';
-        html += '<td class="bd-score" style="color:' + (sr >= 75 ? 'var(--accent)' : sr >= 55 ? 'var(--ink)' : 'var(--berry)') + '">' + sr + '</td></tr>';
-      });
-      html += '</tbody></table></div>';
-
-      html += '<div class="result-section"><h3>匹配与策略建议</h3><div class="match-card">' + buildMatchAdvice(r, g) + '</div></div>';
-
-      // 理想型匹配模拟器
-      html += '<div class="result-section"><h3>理想型匹配模拟器 <span class="pill" style="color:var(--mint);border-color:var(--mint);">互动</span></h3>';
-      html += '<div class="ideal-box">';
-      html += '<p class="ideal-intro">输入你心目中理想型的条件,看看你和TA的匹配度有多高,以及现实中遇到的概率。</p>';
-      html += '<div class="ideal-fields" id="ideal-fields"></div>';
-      html += '<button class="btn btn-primary ideal-btn" id="btn-ideal-calc">算算匹配度</button>';
-      html += '<div class="ideal-result" id="ideal-result"></div>';
-      html += '</div></div>';
-
-      $('result-container').innerHTML = html;
-
-      // 渲染理想型输入控件
-      renderIdealFields(r);
-
-      // 延迟渲染图表,确保 DOM 已可见
-      setTimeout(function () {
-        try {
-          if (window.MatchChart) {
-            window.MatchChart.render({ hardware: r.dims.hardware, soft: r.dims.soft, family: r.dims.family, market: r.dims.market });
-          }
-        } catch (e) {
-          console.error('图表渲染失败:', e);
-        }
-      }, 100);
-    } catch (e) {
-      console.error('结果渲染失败:', e);
-      $('result-container').innerHTML = '<div style="text-align:center;padding:3rem 1rem;color:var(--muted);"><p>结果渲染出了点问题</p><p style="font-size:0.8rem;margin-top:0.5rem;">' + e.message + '</p><p style="margin-top:1rem;">请重新测试试试</p></div>';
-    }
-  }
-
-  function insightItem(it, rank, isUp) {
-    return '<div class="insight-item"><span class="ii-rank">' + rank + '</span>' +
-      '<div class="ii-body"><div class="ii-t">' + it.name + '</div><div class="ii-d">' + it.dim + '维度</div></div>' +
-      '<span class="ii-sc" style="' + (isUp ? '' : 'color:var(--berry)') + '">' + Math.round(it.score) + '</span></div>';
-  }
-
-  function buildGaugeRow(label, val, color) {
-    var v = Math.round(val);
-    return '<div class="gauge-row"><span class="gr-label">' + label + '</span>' +
-      '<div class="gr-track"><div class="gr-fill" style="width:' + v + '%;background:' + color + '"></div></div>' +
-      '<span class="gr-val" style="color:' + color + '">' + v + '</span></div>';
-  }
-
-  function dimNote(k, s) {
-    if (k === 'hardware') return s >= 85 ? '硬件突出,市场筛选中的硬通货。' : s >= 70 ? '硬件扎实,有稳定可见竞争力。' : s >= 55 ? '硬件中等,需靠亮点突破。' : '硬件偏弱,主要提升方向。';
-    if (k === 'soft') return s >= 80 ? '软实力出众,能放大硬件价值。' : s >= 65 ? '软实力良好,关系经营有基础。' : '软实力待提升,建议加强情绪与沟通。';
-    if (k === 'family') return s >= 80 ? '家庭背景优越,提供长期安全感。' : s >= 60 ? '家庭背景平稳,负担可控。' : '家庭背景存在负担,需管理预期。';
-    return s >= 80 ? '市场稀缺度高,议价空间大。' : s >= 65 ? '市场位置健康,匹配效率良好。' : '市场供需承压,建议调整预期或地域。';
-  }
-
-  function buildAnalysis(r, g) {
-    var gw = r.gender === 'male' ? '男生' : '女生';
-    var p1 = '作为相亲市场的' + gw + '参与者,你的综合定位是 <mark class="key">' + g.grade + ' · ' + g.label + '</mark>,总分 ' + Math.round(r.total) + ',处于同龄同性池约前 ' + (100 - r.percentile) + '% 的位置。' + g.desc;
-    var dims = [['hardware', '个人硬件'], ['soft', '软实力'], ['family', '家庭背景'], ['market', '市场供需']];
-    var hi = dims[0], lo = dims[0];
-    dims.forEach(function (d) { if (r.dims[d[0]] > r.dims[hi[0]]) hi = d; if (r.dims[d[0]] < r.dims[lo[0]]) lo = d; });
-    var p2 = '你的<strong style="color:var(--accent)">最强维度是' + hi[1] + '</strong>,这是你在市场里的核心筹码;而<strong style="color:var(--berry)">' + lo[1] + '</strong>是当前的拉分项,也是性价比最高的提升方向。';
-    var m = r.market;
-    var p3 = '市场供需层面:同池竞争力指数 <mark class="key">' + Math.round(m.competitiveness) + '</mark>,匹配可能性约 <mark class="key">' + Math.round(m.matchPossibility) + '%</mark>。' +
-      (m.expectPenalty >= 24 ? '你设的择偶要求偏严苛,匹配池偏小,建议核心项保留、非核心项放宽。' :
-       m.expectPenalty >= 15 ? '你的择偶要求适中,匹配池健康,保持当前策略即可。' :
-       '你的择偶要求偏宽松,匹配池较大,可适当提高标准筛选更优质对象。');
-    return '<p>' + p1 + '</p><p>' + p2 + '</p><p>' + p3 + '</p>';
-  }
-
-  function buildMatchAdvice(r, g) {
-    var sorted = r.items.slice().sort(function (a, b) { return b.score - a.score; });
-    var strengths = sorted.slice(0, 3).map(function (it) { return it.name; });
-    var html = '<div class="mc-title">适合你重点接触的对象</div><div class="match-tags">';
-    if (r.total >= 75) html += '<span class="match-tag">条件相当或略高</span><span class="match-tag">能欣赏你的优势</span><span class="match-tag">同城优质圈层</span>';
-    else if (r.total >= 60) html += '<span class="match-tag">条件互补型</span><span class="match-tag">三观契合优先</span><span class="match-tag">扩大社交半径</span>';
-    else html += '<span class="match-tag">务实匹配型</span><span class="match-tag">看重你的成长性</span><span class="match-tag">优先扩大接触面</span>';
-    html += '</div>';
-    html += '<div class="mc-title" style="margin-top:1rem;">基于你的优势 ' + strengths.join(' · ') + '</div><div class="match-tags">';
-    strengths.forEach(function (s) { html += '<span class="match-tag">' + s + '突出</span>'; });
-    html += '<span class="match-tag">可主动释放信号</span></div>';
-    html += '<div class="mc-title" style="margin-top:1rem;">提升建议</div>';
-    sorted.slice(-2).forEach(function (it) { html += '<div class="mc-tip">· ' + adviceFor(it.name) + '</div>'; });
-    return html;
-  }
-
-  function adviceFor(name) {
-    var map = {
-      '年龄': '年龄不可逆,但可通过状态管理与形象管理保持红利。', '身高': '身高难改,建议在穿搭比例、体态与自信气场上下功夫。',
-      '外貌': '外貌提升空间大:形象管理、健身、皮肤与发型是性价比最高的三项投入。', '体型': '体型是最值得投入的提升项,规律健身3个月可见明显变化。',
-      '学历': '学历可通过在职提升补充,更建议用专业能力与谈吐展现智力魅力。', '收入': '收入是男生核心筹码,聚焦主业成长;女生可适度降低对方收入硬指标扩大池子。',
-      '资产': '制定清晰的资产积累计划,一线城市可考虑先上车再置换。', '穿搭打扮': '穿搭是投入产出比最高的外在提升,找对风格比花钱更重要。',
-      '情商沟通': '沟通是可习得技能,建议刻意练习倾听、共情与表达。', '情绪稳定': '情绪稳定性是长期关系的基石,可通过冥想、运动与认知重构改善。',
-      '兴趣丰富': '培养 1-2 个能社交的兴趣,既提升生活质感也扩大接触面。', '生活品味': '从穿搭、居住空间、饮食细节入手,审美是可积累的软资产。',
-      '价值观包容': '多接触不同圈层与观点,练习"先理解再回应",减少评判。', '幽默感': '幽默感可练习:多积累段子、学会自嘲,轻松氛围比搞笑更重要。',
-      '上进心': '上进心是吸引力放大器,有清晰目标并付诸行动的人自带光芒。', '家庭经济': '家庭经济短期难改,建议通过自身收入提升对冲,并管理对方预期。',
-      '父母状况': '提前规划父母养老与保障,降低未来关系中的不确定性。', '户籍地域': '地域可通过职业迁移优化,新一线是性价比最高的折中。',
-      '社会关系': '主动经营高质量社交圈,相亲中"被介绍"的转化率远高于陌生接触。', '独生子女': '独生子女是中性标签,展现独立与责任感即可转化为优势。',
-      '父母婚姻': '父母婚姻不可选,但可通过自身情绪成熟度打消对方顾虑。', '市场供需': '调整择偶预期与目标地域,在竞争较小的池子里你的相对价值更高。'
-    };
-    return map[name] || '建议针对性提升此项以增强整体竞争力。';
-  }
-
-  // ============================================================
-  // 理想型匹配模拟器
-  // ============================================================
-  var IDEAL_FIELDS = [
-    { id: 'i_age', label: '年龄', type: 'range', min: 20, max: 50, step: 1, unit: '岁', def: 28, required: true },
-    { id: 'i_height', label: '身高', type: 'range', min: 150, max: 200, step: 1, unit: 'cm', def: 175, required: true },
-    { id: 'i_looks', label: '外貌水平', type: 'range', min: 1, max: 10, step: 1, unit: '分', def: 7, required: false },
-    { id: 'i_education', label: '学历', type: 'chips', required: false,
-      options: ['不限', '本科即可', '重点本科', '985/名校', '硕士及以上'] },
-    { id: 'i_income', label: '收入水平', type: 'chips', required: false,
-      options: ['不限', '8千+', '1.5万+', '2.5万+', '4万+'] },
-    { id: 'i_personality', label: '性格特质', type: 'chips', required: false, multi: true, max: 3,
-      options: ['情绪稳定', '幽默有趣', '温柔体贴', '独立自主', '有上进心', '顾家型', '社交达人', '文艺范'] },
-    { id: 'i_family', label: '家庭条件', type: 'chips', required: false,
-      options: ['不限', '小康以上', '中产以上', '无负担', '本地有房'] }
-  ];
-
-  var idealState = {};
-
-  function renderIdealFields(result) {
-    idealState = {};
-    IDEAL_FIELDS.forEach(function (f) {
-      idealState[f.id] = f.type === 'chips' ? (f.multi ? [] : 0) : f.def;
-    });
-
-    var container = $('ideal-fields');
-    var html = '';
-    IDEAL_FIELDS.forEach(function (f) {
-      html += '<div class="ideal-field">';
-      html += '<div class="if-label">' + f.label + ' <span class="if-tag' + (f.required ? '' : ' flex') + '">' + (f.required ? '必选' : '可选') + '</span></div>';
-      if (f.type === 'range') {
-        html += '<div class="ideal-range">';
-        html += '<input type="range" id="' + f.id + '" min="' + f.min + '" max="' + f.max + '" step="' + f.step + '" value="' + f.def + '">';
-        html += '<span class="ir-val" id="rv-' + f.id + '">' + f.def + f.unit + '</span>';
-        html += '</div>';
-      } else if (f.type === 'chips') {
-        html += '<div class="ideal-pick">';
-        f.options.forEach(function (opt, i) {
-          html += '<span class="ideal-chip" data-field="' + f.id + '" data-i="' + i + '">' + opt + '</span>';
-        });
-        html += '</div>';
-      }
-      html += '</div>';
-    });
-    container.innerHTML = html;
-
-    // 绑定滑块
-    IDEAL_FIELDS.forEach(function (f) {
-      if (f.type === 'range') {
-        var el = $(f.id), rv = $('rv-' + f.id);
-        el.addEventListener('input', function () {
-          idealState[f.id] = Number(el.value);
-          rv.textContent = el.value + f.unit;
-        });
-      }
-    });
-    // 绑定 chips
-    document.querySelectorAll('.ideal-chip').forEach(function (chip) {
-      chip.addEventListener('click', function () {
-        var fid = chip.getAttribute('data-field');
-        var fi = Number(chip.getAttribute('data-i'));
-        var field = IDEAL_FIELDS.find(function (x) { return x.id === fid; });
-        if (field.multi) {
-          var arr = idealState[fid];
-          var pos = arr.indexOf(fi);
-          if (pos > -1) { arr.splice(pos, 1); chip.classList.remove('on'); }
-          else { if (arr.length >= field.max) return; arr.push(fi); chip.classList.add('on'); }
-        } else {
-          idealState[fid] = fi;
-          document.querySelectorAll('.ideal-chip[data-field="' + fid + '"]').forEach(function (c) { c.classList.remove('on'); });
-          chip.classList.add('on');
-        }
-      });
-    });
-
-    $('btn-ideal-calc').addEventListener('click', function () {
-      var res = computeIdealMatch(result);
-      renderIdealResult(res, result);
-    });
-  }
-
-  function computeIdealMatch(result) {
-    var g = state.gender;
-    var myAge = state.answers.age;
-    var myScore = result.total;
-    var myDims = result.dims;
-
-    // 理想型的"市场分数"(根据设定的条件估算)
-    var iAge = idealState.i_age;
-    var iHeight = idealState.i_height;
-    var iLooks = idealState.i_looks;
-    var iEdu = idealState.i_education;
-    var iInc = idealState.i_income;
-    var iFam = idealState.i_family;
-
-    var targetGender = g === 'male' ? 'female' : 'male';
-    var iAgeScore = ageScore(targetGender, iAge);
-    var iHeightScore = heightScore(targetGender, iHeight);
-    var iLooksScore = sliderScore(iLooks);
-
-    var eduScores = [70, 65, 74, 86, 84];
-    var iEduScore = eduScores[iEdu] || 70;
-
-    var incScores = [70, 64, 74, 86, 92];
-    var iIncScore = incScores[iInc] || 70;
-
-    var famScores = [70, 78, 85, 80, 82];
-    var iFamScore = famScores[iFam] || 70;
-
-    // 理想型总分(用目标性别的权重)
-    var tDW = DIM_WEIGHTS[targetGender];
-    var tHW = HW_WEIGHTS[targetGender];
-    var iHardware = iAgeScore * tHW.age + iHeightScore * tHW.height + iLooksScore * tHW.looks + iEduScore * tHW.education + iIncScore * tHW.income + 80 * tHW.asset + 80 * tHW.bodyType + 75 * tHW.grooming;
-    var iSoft = 72;
-    var iFamily = iFamScore;
-    var iMarket = 70;
-    var iTotal = iHardware * tDW.hardware + iSoft * tDW.soft + iFamily * tDW.family + iMarket * tDW.market;
-
-    // 匹配度 = 双向吸引 + 条件互补 + 现实概率
-    // 1. 你配得上TA吗(你的分 vs TA的分)
-    var gap = Math.abs(myScore - iTotal);
-    var scoreMatch = clamp(100 - gap * 1.2, 20, 98);
-
-    // 2. 年龄差匹配
-    var ageDiff = Math.abs(myAge - iAge);
-    var ageMatch = ageDiff <= 3 ? 95 : ageDiff <= 5 ? 85 : ageDiff <= 8 ? 70 : ageDiff <= 12 ? 50 : 30;
-
-    // 3. 现实稀缺度(条件越高越难遇到)
-    var rarity = 100;
-    if (iLooks >= 8) rarity -= 15;
-    if (iEdu >= 3) rarity -= 8;
-    if (iInc >= 3) rarity -= 12;
-    if (iFam >= 2) rarity -= 10;
-    if (iHeight >= (targetGender === 'male' ? 180 : 168)) rarity -= 8;
-    var encounterRate = clamp(rarity, 15, 90);
-
-    // 4. 性格匹配(选了几个性格特质)
-    var iPers = idealState.i_personality || [];
-    var personalityBonus = iPers.length > 0 ? Math.min(iPers.length * 4, 10) : 5;
-
-    // 综合匹配度
-    var matchScore = Math.round(scoreMatch * 0.45 + ageMatch * 0.25 + encounterRate * 0.20 + personalityBonus * 0.10);
-    matchScore = clamp(matchScore, 15, 97);
-
-    // 维度分解
-    var breakdown = [
-      { name: '综合分差', val: Math.round(scoreMatch), color: 'var(--accent)' },
-      { name: '年龄匹配', val: Math.round(ageMatch), color: 'var(--mint)' },
-      { name: '遇到概率', val: Math.round(encounterRate), color: 'var(--lilac)' },
-      { name: '性格加分', val: Math.round(personalityBonus * 10), color: 'var(--gold)' }
-    ];
-
-    var verdict, detail;
-    if (matchScore >= 80) {
-      verdict = '天作之合';
-      detail = '你设定的理想型条件和你的市场定位非常匹配,年龄差也在理想范围内。这类人在你的圈层中虽然有一定稀缺度,但并非遥不可及。保持当前策略,主动接触就好。';
-    } else if (matchScore >= 65) {
-      verdict = '很有希望';
-      detail = '整体匹配度不错,但存在一定落差。建议在核心条件上保留,次要条件适当放宽,能显著提升遇到合适人选的概率。';
-    } else if (matchScore >= 45) {
-      verdict = '需要将就';
-      detail = '你设定的理想型条件明显高于你的市场定位,或这类人比较稀缺。要么提升自身竞争力,要么调整预期,在"理想"和"现实"之间找到平衡点。';
-    } else {
-      verdict = '差距较大';
-      detail = '理想型与你的市场定位差距明显,现实中遇到的概率也偏低。建议重新审视择偶标准,聚焦2-3个最核心的条件,其余适当放宽。';
-    }
-
-    return {
-      matchScore: matchScore, verdict: verdict, detail: detail, breakdown: breakdown,
-      iTotal: Math.round(iTotal), encounterRate: Math.round(encounterRate)
-    };
-  }
-
-  function renderIdealResult(res, result) {
-    var el = $('ideal-result');
-    var circumference = 2 * Math.PI * 54;
-    var offset = circumference * (1 - res.matchScore / 100);
-
-    var html = '<div class="ideal-score-wrap">';
-    html += '<div class="ideal-score-ring">';
-    html += '<svg viewBox="0 0 120 120"><circle class="isr-bg" cx="60" cy="60" r="54"/><circle class="isr-fg" cx="60" cy="60" r="54" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + circumference + '"/></svg>';
-    html += '<div class="ideal-score-num"><span class="n" id="ideal-num">0</span><span class="u">匹配度</span></div>';
-    html += '</div>';
-    html += '<div class="ideal-verdict">' + res.verdict + '</div>';
-    html += '<div class="ideal-detail">' + res.detail + '</div>';
-    html += '<div class="ideal-breakdown">';
-    res.breakdown.forEach(function (b) {
-      html += '<div class="ideal-bd-row"><span class="ibd-name">' + b.name + '</span>';
-      html += '<div class="ibd-track"><div class="ibd-fill" style="width:' + b.val + '%;background:' + b.color + '"></div></div>';
-      html += '<span class="ibd-val" style="color:' + b.color + '">' + b.val + '</span></div>';
-    });
-    html += '</div>';
-    html += '<div class="ideal-detail" style="margin-top:0.8rem;">理想型市场分约 <strong style="color:var(--accent);font-family:var(--font-mono)">' + res.iTotal + '</strong> · 你的市场分 <strong style="color:var(--accent);font-family:var(--font-mono)">' + Math.round(result.total) + '</strong> · 现实中遇到的概率约 <strong style="color:var(--lilac);font-family:var(--font-mono)">' + res.encounterRate + '%</strong></div>';
-    html += '</div>';
-
-    el.innerHTML = html;
-    el.classList.add('show');
-
-    // 动画数字 + 环形进度
-    var numEl = $('ideal-num');
-    var fg = el.querySelector('.isr-fg');
-    var cur = 0, target = res.matchScore;
-    var step = Math.max(1, Math.ceil(target / 30));
-    var timer = setInterval(function () {
-      cur += step;
-      if (cur >= target) { cur = target; clearInterval(timer); }
-      numEl.textContent = cur;
-      fg.style.strokeDashoffset = circumference * (1 - cur / 100);
-    }, 30);
-
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
+ } else {
+  const picked=[...$('question').querySelectorAll('input:checked')].map(el=>q.options[Number(el.value)]);
+  value=q.type==='multi'?picked:(picked[0]||null);
+ }
+ answers[q.id]=answered(value)?value:null;return true;
+}
+function advance() {if(index<QUESTIONS.length-1){index++;renderQuestion();}else renderReport();}
+$('start').onclick=()=>{isSample=false;goQuestion();};
+$('next').onclick=()=>{if(saveAnswer())advance();};
+$('skip').onclick=()=>{answers[QUESTIONS[index].id]=null;advance();};
+$('previous').onclick=()=>{if(index>0&&saveAnswer()){index--;renderQuestion();}};
+$('sample').onclick=()=>{
+ reset();isSample=true;
+ answers={age:29,city:'杭州',work:'时间相对规律',hobbies:['散步或户外','做饭与美食'],chat:'经常不知道怎么接话',conflict:'先冷静，再约时间沟通',strength:['做事可靠','尊重独立空间'],lifestyle:'有固定见面时间，也有个人空间',care:'有定期照护安排，时间可协调',housing:'与伴侣独立居住',finance:'共同预算，定期沟通',timeline:'先认真相处，再讨论结婚',children:'还不确定，需要进一步考虑',location:'希望留在目前城市',values:['彼此尊重','沟通坦诚','家庭边界清晰'],focus:'让见面聊天更自然'};
+ renderReport();
+};
+function renderReport() {
+ report=buildReport(answers);show('result');$('sample-banner').hidden=!isSample;$('report-summary').textContent=report.summary;
+ const topics=report.insights.filter(i=>/安排|居住|开支|进度|生育|定居/.test(i.title)).map(i=>i.title).slice(0,3).join('、')||'可按自己的节奏补充未来安排';
+ $('report-highlights').innerHTML=[['01 / 值得表达',report.strengths],['02 / 可以沟通',topics],['03 / 优先行动',answers.focus||'先补充你愿意分享的回答']].map(([h,t])=>'<article class="card"><span class="card-index">'+h+'</span><p>'+escapeHTML(t)+'</p></article>').join('');
+ $('insights').innerHTML=report.insights.length?report.insights.map(i=>'<article class="card insight"><h3>'+escapeHTML(i.title)+'</h3><p class="basis">你的回答：'+escapeHTML(i.basis)+'</p><p>'+escapeHTML(i.meaning)+'</p><p class="action"><strong>下一步：</strong>'+escapeHTML(i.action)+'</p></article>').join(''):'<p class="card">暂无可解读的回答。你可以先使用择偶优先级工具，也可以返回补充回答。</p>';
+ $('answer-list').innerHTML=QUESTIONS.map(q=>'<dt>'+escapeHTML(q.title)+'</dt><dd>'+escapeHTML(displayAnswer(answers[q.id]))+'</dd>').join('');
+ if(!draftEdited)draft=report.intro;$('intro-draft').value=draft;
+ $('conversation-list').innerHTML=report.conversations.map(t=>'<p class="conversation-item">'+escapeHTML(t)+'</p>').join('');
+ $('action-list').innerHTML=report.actions.map((a,i)=>'<label class="action-item"><input type="checkbox" data-index="'+i+'" '+(checks[i]?'checked':'')+'><span><strong>'+a.time+'</strong><small>'+escapeHTML(a.text)+'</small></span></label>').join('');
+ $('action-list').querySelectorAll('input').forEach(el=>el.onchange=()=>checks[Number(el.dataset.index)]=el.checked);
+ renderPreferences();updatePreferences(false);$('save-status').textContent='';$('report-title').focus();
+}
+function renderPreferences() {
+ $('preference-fields').innerHTML=PREFS.map(f=>{
+  const p=preferences[f.id]||{};
+  let html='<div class="preference-field"><label '+(f.type==='range'?'id="label-'+f.id+'"':'for="pref-'+f.id+'"')+'>'+f.label+'</label>';
+  if(f.type==='range')html+='<div class="range-pair"><input type="number" id="pref-'+f.id+'-min" aria-label="'+f.label+'下限" min="'+f.min+'" max="'+f.max+'" placeholder="最低" value="'+escapeHTML(p.min||'')+'"><span>至</span><input type="number" id="pref-'+f.id+'-max" aria-label="'+f.label+'上限" min="'+f.min+'" max="'+f.max+'" placeholder="最高" value="'+escapeHTML(p.max||'')+'"><span>'+f.unit+'</span></div>';
+  else html+='<select id="pref-'+f.id+'">'+f.options.map(opt=>'<option '+(p.value===opt?'selected':'')+'>'+escapeHTML(opt)+'</option>').join('')+'</select>';
+  html+='<label class="priority-label" for="priority-'+f.id+'">对我的重要程度<select id="priority-'+f.id+'">'+PRIORITIES.map(opt=>'<option '+(p.priority===opt?'selected':'')+'>'+opt+'</option>').join('')+'</select></label></div>';
+  return html;
+ }).join('');
+ $('preference-fields').querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{readPreferences();$('preference-result').hidden=true;$('preference-error').textContent='';}));
+}
+function readPreferences() {
+ PREFS.forEach(f=>{preferences[f.id]=f.type==='range'?{min:$('pref-'+f.id+'-min').value,max:$('pref-'+f.id+'-max').value,priority:$('priority-'+f.id).value}:{value:$('pref-'+f.id).value,priority:$('priority-'+f.id).value};});
+}
+function updatePreferences(visible=true) {
+ readPreferences();const result=classifyPreferences(preferences);
+ $('preference-error').textContent=result.error||'';
+ if(result.error){$('preference-result').hidden=true;return false;}
+ const groups=result.groups;let html='<h3>我的择偶优先级</h3>';
+ PRIORITIES.forEach(priority=>{html+='<h4>'+priority+'</h4>'+(groups[priority].length?'<ul>'+groups[priority].map(t=>'<li>'+escapeHTML(t)+'</li>').join('')+'</ul>':'<p>尚未设置</p>');});
+ html+='<p>这是你的条件整理，不是对某个人的匹配判断。对必须满足的条件，可以写下它为什么重要；是否调整由你决定。性格、尊重与相处感受需要在真实交流中了解。</p>';
+ $('preference-result').innerHTML=html;$('preference-result').hidden=!visible;return true;
+}
+$('preference-form').onsubmit=e=>{e.preventDefault();updatePreferences();};
+$('intro-draft').oninput=()=>{draft=$('intro-draft').value;draftEdited=true;};
+function reportText() {
+ const p=classifyPreferences(preferences);if(p.error)return null;
+ const lines=[isSample?'相亲定位与择偶偏好分析 · 虚构样例':'相亲定位与择偶偏好分析',report.summary,'','【回答解读】'];
+ report.insights.forEach(i=>lines.push(i.title,'你的回答：'+i.basis,i.meaning,'下一步：'+i.action,''));
+ lines.push('【择偶优先级】');PRIORITIES.forEach(k=>lines.push(k,...(p.groups[k].length?p.groups[k]:['尚未设置'])));
+ lines.push('','【自我介绍草稿】',$('intro-draft').value,'','【见面沟通清单】',...report.conversations,'','【两周行动清单】');
+ report.actions.forEach((a,i)=>lines.push((checks[i]?'[已完成] ':'[待完成] ')+a.time+'：'+a.text));
+ lines.push('','【全部回答】');QUESTIONS.forEach(q=>lines.push(q.title+'：'+displayAnswer(answers[q.id])));
+ lines.push('','依据：按填写的回答与固定规则整理，不计算人群排名、成功概率或双方匹配度。家庭情况不作优劣评价。');
+ return lines.join('\n');
+}
+$('download').onclick=()=>{
+ if(!updatePreferences()){$('preference-error').scrollIntoView({block:'center'});return;}
+ const text=reportText(),blob=new Blob(['\uFEFF'+text],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob);
+ const link=document.createElement('a');link.href=url;link.download=isSample?'相亲准备报告-虚构样例.txt':'我的相亲准备报告.txt';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ $('save-status').textContent='已发起下载，请在浏览器下载列表中查看。';
+};
+function preparePrint() {
+ if(!report)return false;
+ if(!updatePreferences())return false;
+ if(!$('print-intro')){const p=document.createElement('p');p.id='print-intro';p.textContent=$('intro-draft').value;$('intro-draft').after(p);}
+ $('intro-draft').hidden=true;return true;
+}
+function finishPrint(){const p=$('print-intro');if(p)p.remove();$('intro-draft').hidden=false;}
+$('print').onclick=()=>{if(preparePrint()){window.print();finishPrint();}else $('preference-error').scrollIntoView({block:'center'});};
+window.addEventListener('beforeprint',preparePrint);window.addEventListener('afterprint',finishPrint);
+$('edit').onclick=()=>{readPreferences();index=0;goQuestion();};
+function reset(){answers={};preferences={};checks=[];draft='';draftEdited=false;index=0;isSample=false;report=null;}
+$('restart').onclick=()=>{if(window.confirm('清空当前回答和草稿，重新开始？')){reset();show('intro');$('start').focus();}};
 })();
+
