@@ -686,8 +686,8 @@ body{
     <h1>相亲之前，<br>先想清楚<span>你想要的关系</span></h1>
     <p class="intro-subtitle">梳理自己的生活与期待，整理择偶优先级，给下一次相亲一个更清晰的开始。</p>
     <div class="intro-meta">
-      <span>⏱️ 约 5 分钟</span>
-      <span>📝 16 个问题</span>
+      <span>⏱️ 约 8 分钟</span>
+      <span>📝 25 个问题</span>
       <span>💾 可保存报告</span>
     </div>
   </div>
@@ -905,16 +905,25 @@ body{
 // ============ 数据 ============
 const questions = [
   {id:'age',section:'个人基本情况',title:'你今年多大？',hint:'用于介绍生活阶段，不参与评分。',type:'number',min:18,max:100,unit:'岁'},
+  {id:'height',section:'个人基本情况',title:'你的身高是多少？',hint:'可以填大概的数字，不需要精确到厘米。',type:'number',min:140,max:210,unit:'cm'},
   {id:'city',section:'个人基本情况',title:'你目前常住在哪座城市？',hint:'只需填写城市，不要填写具体地址。',type:'text',max:40,placeholder:'例如：杭州，也可以跳过'},
+  {id:'education',section:'个人基本情况',title:'你的最高学历是？',options:['高中及以下','大专','本科','硕士','博士','不想填写']},
   {id:'work',section:'个人基本情况',title:'你的工作与生活节奏更接近哪一种？',options:['时间相对规律','经常加班或出差','轮班或时间不固定','学习或职业调整阶段']},
   {id:'hobbies',section:'个人基本情况',title:'你愿意分享哪些日常兴趣？',hint:'最多选 3 项；没有贴近的可以跳过。',type:'multi',max:3,options:['散步或户外','运动健身','阅读或看电影','做饭与美食','旅行探索','游戏或手作','音乐或艺术']},
   {id:'chat',section:'相处与表达',title:'认识新朋友时，你通常怎样开启聊天？',options:['比较容易主动分享','先倾听，熟悉后再分享','经常不知道怎么接话','看场合，还不确定']},
   {id:'conflict',section:'相处与表达',title:'出现分歧时，你更常怎么处理？',options:['说明感受，一起讨论','先冷静，再约时间沟通','容易着急，事后再解释','倾向回避，不太会开口']},
+  {id:'express',section:'相处与表达',title:'你更习惯怎样表达关心？',hint:'不同的人表达方式不一样，没有对错。',options:['直接说出来','用行动照顾对方','默默记在心里','不太会表达，还在学习']},
   {id:'strength',section:'相处与表达',title:'你最想让对方了解自己的哪些特点？',hint:'最多选 3 项。这是自我描述，可以用真实经历来说明。',type:'multi',max:3,options:['愿意倾听','做事可靠','喜欢分享生活','尊重独立空间','愿意一起规划','愿意照顾彼此']},
   {id:'lifestyle',section:'相处与表达',title:'你期待怎样的相处频率？',options:['日常多联系，见面频繁','有固定见面时间，也有个人空间','时间灵活，提前协商','还想通过相处慢慢了解']},
+  {id:'sleep',section:'生活方式',title:'你的作息习惯更接近哪一种？',hint:'作息不同也可以相处，提前知道更好安排。',options:['早睡早起型','正常作息（11-12点睡）','晚睡晚起型','经常熬夜，不固定']},
+  {id:'diet',section:'生活方式',title:'你的饮食偏好是？',options:['不忌口，什么都吃','偏清淡健康','喜欢美食探店','有忌口（过敏/素食等）']},
+  {id:'exercise',section:'生活方式',title:'你平时的运动习惯是？',options:['经常运动，有固定项目','偶尔运动，看心情','很少运动','工作已经够累了']},
+  {id:'pet',section:'生活方式',title:'你对宠物的态度是？',hint:'有过敏、害怕或特殊经历也可以在这里说明。',options:['有宠物，很喜欢','喜欢但暂时没养','不反感，可以相处','不喜欢/过敏，最好不要']},
   {id:'care',section:'家庭与未来',title:'目前是否有需要沟通的家庭照护安排？',hint:'只梳理安排，不评价家庭好坏；无需填写健康细节。',options:['暂无固定照护安排','有定期照护安排，时间可协调','有长期照护安排，需要提前沟通','尚不确定']},
   {id:'housing',section:'家庭与未来',title:'对未来居住方式，你更倾向于？',options:['与伴侣独立居住','与家人同住或就近照顾','根据双方工作和情况协商','暂未考虑']},
   {id:'finance',section:'家庭与未来',title:'对于共同生活的开支，你希望怎样安排？',hint:'不需要填写收入或资产数额。',options:['各自独立，共同开支协商','共同预算，定期沟通','按收入和承担的责任协商','还没有想清楚']},
+  {id:'marriage',section:'家庭与未来',title:'你对婚姻的看法更接近哪一种？',options:['人生重要的一部分','顺其自然，遇到合适的人再说','不是必需，但可以考虑','更倾向不婚']},
+  {id:'roles',section:'家庭与未来',title:'对家庭中的角色分工，你的想法是？',hint:'没有标准答案，关键是双方能协商一致。',options:['传统分工（男主外女主内）','传统分工（女主外男主内）','共同分担，灵活协商','还没想清楚']},
   {id:'timeline',section:'关系期待',title:'你目前对关系进度的想法是？',options:['希望 1—2 年内考虑结婚','先认真相处，再讨论结婚','希望慢慢了解，不设时间表','还在探索是否适合进入关系']},
   {id:'children',section:'关系期待',title:'关于生育，你目前的想法是？',hint:'这是需要双方平等沟通的议题，可以跳过。',options:['希望未来有孩子','倾向不生育','还不确定，需要进一步考虑']},
   {id:'location',section:'关系期待',title:'你对未来定居地点的想法是？',options:['希望留在目前城市','可考虑异地，之后协商定居','愿意根据双方规划调整','暂未确定']},
@@ -1435,6 +1444,18 @@ function buildInsights(){
       '准备一个最近与这些兴趣有关的小片段，并问问对方平时怎样度过休息日。');
   }
 
+  if(isAnswered('height')){
+    add('身高信息的沟通时机', 'height',
+      '身高是你选择提供的信息，它是客观描述，不是价值评价。',
+      '如果对方很在意身高，可以在认识初期说明，避免浪费彼此时间。');
+  }
+
+  if(isAnswered('education') && answers.education !== '不想填写'){
+    add('学历背景与共同话题', 'education',
+      '学历是成长经历的一部分，不代表一个人的全部。',
+      '可以聊聊专业选择的原因、学习中最有收获的事，而不是只说学历名称。');
+  }
+
   const chatTips = {
     '比较容易主动分享':['主动分享是你的自述习惯，也可以留意对方是否有表达空间。','分享一小段后停下来，邀请对方讲讲自己的经历。'],
     '先倾听，熟悉后再分享':['你更习惯先观察、慢慢熟悉，可以提前说明自己的交流节奏。','准备两件愿意分享的生活小事，听完对方后也主动说一点自己的感受。'],
@@ -1450,6 +1471,47 @@ function buildInsights(){
     '倾向回避，不太会开口':['你提到不容易开口，可以从小分歧练习表达。','先写下想表达的一句话，再选择双方有时间时讨论一件具体的小事。']
   };
   if(conflictTips[a.conflict]) add('为分歧准备一种表达方式', 'conflict', ...conflictTips[a.conflict]);
+
+  const expressTips = {
+    '直接说出来':['你习惯直接表达关心，也可以确认对方是否喜欢这种方式。','试着把关心说出来的同时，也问问对方感受到了什么。'],
+    '用行动照顾对方':['你更习惯用行动表达，有时对方可能感受不到你的心意。','在做了关心对方的事之后，可以补充一句你当时的想法。'],
+    '默默记在心里':['你把关心放在心里，但对方不一定知道你在在意。','选一件你默默为对方做过或想过的事，找机会告诉对方。'],
+    '不太会表达，还在学习':['你意识到表达关心是需要练习的，这本身就是很好的开始。','从一个小习惯开始，比如每天说一句"今天辛苦了"或分享一件小事。']
+  };
+  if(expressTips[a.express]) add('了解你的关心表达方式', 'express', ...expressTips[a.express]);
+
+  // 生活方式
+  if(isAnswered('sleep')){
+    const sleepTips = {
+      '早睡早起型':['你是早起型，作息规律也是一种生活节奏。','可以聊聊周末是不是也一样早起，以及希望伴侣的作息是否合拍。'],
+      '正常作息（11-12点睡）':['你的作息比较规律，大多数人也在这个区间。','一起住后作息差异往往会出现，可以提前讨论各自的底线。'],
+      '晚睡晚起型':['你习惯晚睡晚起，这是个人节律，不是"懒"。','如果对方作息不同，可以讨论怎样互不打扰，以及周末怎么安排。'],
+      '经常熬夜，不固定':['你的作息不太规律，可能和工作或习惯有关。','想想有没有想调整的方向，以及希望对方怎样看待这件事。']
+    };
+    if(sleepTips[a.sleep]) add('作息习惯也值得提前了解', 'sleep', ...sleepTips[a.sleep]);
+  }
+
+  if(isAnswered('diet')){
+    add('饮食偏好是日常相处的细节', 'diet',
+      '吃不到一起有时比想象中影响更大，但也可以协商。',
+      '提前说清楚忌口或偏好，约会选餐厅时也能更好安排。');
+  }
+
+  if(isAnswered('exercise')){
+    add('运动习惯反映生活节奏', 'exercise',
+      '运动习惯不同也可以相处，关键是彼此尊重对方的安排。',
+      '如果喜欢运动，可以约一起体验；如果不喜欢，也说说你更享受什么活动。');
+  }
+
+  if(isAnswered('pet')){
+    const petTips = {
+      '有宠物，很喜欢':['宠物是你生活的一部分，也是一种责任。','可以分享养宠物的故事，同时了解对方对宠物的态度。'],
+      '喜欢但暂时没养':['你喜欢宠物，只是目前条件不允许。','可以聊聊以后想养什么，以及对方的想法。'],
+      '不反感，可以相处':['你对宠物持开放态度，这很好。','如果对方有宠物，可以先接触试试，确认自己真实的感受。'],
+      '不喜欢/过敏，最好不要':['你对宠物有明确的态度，这需要提前沟通。','在关系早期说明这个底线，避免后期产生不必要的矛盾。']
+    };
+    if(petTips[a.pet]) add('宠物也是关系中的重要议题', 'pet', ...petTips[a.pet]);
+  }
 
   const careTips = {
     '暂无固定照护安排':['你目前没有固定照护安排，未来仍可能变化。','在关系逐步稳定时，互相了解对家庭责任的期待。'],
@@ -1471,6 +1533,22 @@ function buildInsights(){
   add('把开支安排说清楚', 'finance',
     '共同开支涉及双方的习惯与责任，不能仅凭收入判断。',
     '用房租、日常开支或旅行预算等具体场景，讨论怎样分担更合适。');
+
+  if(isAnswered('marriage')){
+    const marriageTips = {
+      '人生重要的一部分':['你对婚姻有明确的期待，这是一个很重要的人生选择。','在认识初期可以温和地聊一聊对婚姻的看法，确认双方方向是否一致。'],
+      '顺其自然，遇到合适的人再说':['你对婚姻持开放态度，不勉强也不排斥。','可以想想"合适的人"对你来说具体是什么样的，有哪些关键特质。'],
+      '不是必需，但可以考虑':['你不把婚姻当作人生必须项，这是一种很清醒的态度。','如果对方很看重婚姻，需要坦诚沟通你的想法，不要给对方虚假的期待。'],
+      '更倾向不婚':['你更倾向不婚的生活方式，这是值得尊重的个人选择。','在关系认真之前就说明你的态度，避免浪费彼此的时间和感情。']
+    };
+    if(marriageTips[a.marriage]) add('对婚姻的看法需要坦诚沟通', 'marriage', ...marriageTips[a.marriage]);
+  }
+
+  if(isAnswered('roles')){
+    add('家庭角色分工值得提前讨论', 'roles',
+      '家庭角色没有标准答案，关键是双方都觉得公平、愿意承担。',
+      '用具体场景讨论：比如家务怎么分、谁管钱、生病时谁照顾。');
+  }
   add('讨论关系进度', 'timeline',
     '这是你自己的时间期待，并不代表对方有相同计划。',
     '在互有继续了解意愿后，问问对方的关系目标，确认节奏是否可以协商。');
@@ -1620,10 +1698,21 @@ function renderPriorityChart(){
 function buildIntroDraft(){
   const a = answers;
   const parts = [];
-  if(a.age) parts.push(`我今年${a.age}岁。`);
+  if(a.age) parts.push(`我今年${a.age}岁${a.height?`，身高${a.height}cm`:''}。`);
   if(a.city) parts.push(`目前常住在${a.city}。`);
+  if(a.education && a.education !== '不想填写') parts.push(`学历是${a.education}。`);
   if(a.work) parts.push(`工作与生活节奏是${a.work}。`);
   if(Array.isArray(a.hobbies) && a.hobbies.length) parts.push(`平时喜欢${a.hobbies.join("、")}。`);
+
+  // 生活方式
+  const lifestyleBits = [];
+  if(a.sleep) lifestyleBits.push(`作息是${a.sleep}`);
+  if(a.diet) lifestyleBits.push(`饮食${a.diet.replace(/（.*?）/g,'')}`);
+  if(a.exercise) lifestyleBits.push(`${a.exercise.replace(/，.*$/g,'')}`);
+  if(lifestyleBits.length) parts.push(`生活方面，${lifestyleBits.join('，')}。`);
+
+  if(a.pet && a.pet !== '不反感，可以相处') parts.push(`对宠物的态度：${a.pet}。`);
+
   if(Array.isArray(a.strength) && a.strength.length) parts.push(`我觉得自己${a.strength.join("、")}。`);
   if(Array.isArray(a.values) && a.values.length) parts.push(`相处中，我比较看重${a.values.join("、")}。`);
   if(a.timeline) parts.push(`对关系的期待是${a.timeline}。`);
@@ -1651,15 +1740,18 @@ function buildTopics(){
       topics.push({icon:'🎯', text:`聊聊最近一次${h}的经历，有什么好玩的事情`});
     });
   }
+  // 基于生活方式
+  if(a.sleep) topics.push({icon:'🌙', text:'你是早起型还是夜猫子？周末一般怎么安排'});
+  if(a.diet) topics.push({icon:'🍜', text:'最近吃到最满意的一顿饭是什么'});
+  if(a.exercise && a.exercise !== '工作已经够累了') topics.push({icon:'🏃', text:'最近有没有发现什么有意思的运动方式'});
+  if(a.pet && (a.pet.includes('喜欢') || a.pet.includes('有宠物'))) topics.push({icon:'🐾', text:'聊聊你养过的宠物，或者最喜欢哪种小动物'});
   // 基于工作
   if(a.work) topics.push({icon:'💼', text:'最近工作中有没有让你觉得有成就感的事'});
   // 通用
   topics.push({icon:'🌆', text:'你理想中的周末是什么样的'});
-  topics.push({icon:'🍜', text:'最近吃到最满意的一顿饭是什么'});
-  topics.push({icon:'🎵', text:'最近在循环哪首歌或哪部剧'});
   topics.push({icon:'✈️', text:'如果有一周假期，最想去哪里'});
-  topics.push({icon:'🐾', text:'小时候养过宠物吗？想养什么'});
-  topics.push({icon:'🌙', text:'你是早起型还是夜猫子'});
+  topics.push({icon:'🎵', text:'最近在循环哪首歌或哪部剧'});
+  topics.push({icon:'🏡', text:'你理想的居住环境是什么样的'});
 
   // 只取前8个
   const showTopics = topics.slice(0, 8);
@@ -1735,6 +1827,12 @@ function downloadReport(){
 
   text += `\n【相处与表达】\n`;
   questions.filter(q => q.section === '相处与表达' && isAnswered(q.id)).forEach(q => {
+    const val = Array.isArray(a[q.id]) ? a[q.id].join('、') : a[q.id];
+    text += `• ${q.title}：${val}\n`;
+  });
+
+  text += `\n【生活方式】\n`;
+  questions.filter(q => q.section === '生活方式' && isAnswered(q.id)).forEach(q => {
     const val = Array.isArray(a[q.id]) ? a[q.id].join('、') : a[q.id];
     text += `• ${q.title}：${val}\n`;
   });
@@ -1880,13 +1978,17 @@ function backToIntro(){
 // ============ 样例 ============
 function loadSample(){
   answers = {
-    age: 28, city: '上海', work: '时间相对规律',
+    age: 28, height: 165, city: '上海', education: '本科', work: '时间相对规律',
     hobbies: ['阅读或看电影', '散步或户外', '做饭与美食'],
     chat: '先倾听，熟悉后再分享', conflict: '说明感受，一起讨论',
+    express: '用行动照顾对方',
     strength: ['愿意倾听', '做事可靠', '尊重独立空间'],
     lifestyle: '有固定见面时间，也有个人空间',
+    sleep: '正常作息（11-12点睡）', diet: '不忌口，什么都吃',
+    exercise: '偶尔运动，看心情', pet: '喜欢但暂时没养',
     care: '暂无固定照护安排', housing: '与伴侣独立居住',
     finance: '各自独立，共同开支协商',
+    marriage: '顺其自然，遇到合适的人再说', roles: '共同分担，灵活协商',
     timeline: '先认真相处，再讨论结婚', children: '还不确定，需要进一步考虑',
     location: '希望留在目前城市',
     values: ['彼此尊重', '沟通坦诚', '共同成长'],
