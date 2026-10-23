@@ -1,2014 +1,2672 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<html lang="zh-CN"><head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="梳理相亲需求、整理择偶优先级，生成个人介绍和两周行动清单。">
-<title>相亲定位 · 择偶偏好梳理</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>相亲市场定位测试 · 你是什么段位？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&amp;family=Noto+Sans+SC:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --cream:#fdf2f5;
-  --cream-2:#fef7f9;
-  --warm-bg:#fcf2f5;
-  --card:#ffffff;
-  --rose:#e8a0b0;
-  --rose-deep:#d88596;
-  --rose-light:#f4c4cd;
-  --rose-soft:#fce4ec;
-  --coral:#f4a261;
-  --coral-light:#f8c794;
-  --mint:#95d5b2;
-  --mint-deep:#74c69d;
-  --mint-soft:#d8f3dc;
-  --lavender:#cdb4db;
-  --lavender-soft:#ede4f0;
-  --honey:#e9c46a;
-  --text:#4a3f45;
-  --text-soft:#8a7e82;
-  --text-light:#b0a5aa;
-  --border:#f0e0e6;
-  --radius:24px;
-  --radius-sm:16px;
-  --shadow:0 6px 24px rgba(216,133,150,.08);
-  --shadow-lg:0 16px 48px rgba(216,133,150,.14);
-  --shadow-soft:0 2px 12px rgba(216,133,150,.06);
-  --transition:all .4s cubic-bezier(.4,0,.2,1);
-}
-[data-theme="dark"]{
-  --cream:#1e1822;
-  --cream-2:#261e2c;
-  --warm-bg:#2a2030;
-  --card:#30283a;
-  --rose:#d88596;
-  --rose-deep:#c97085;
-  --rose-light:#e0a5b5;
-  --rose-soft:#3d2a38;
-  --coral:#e8944f;
-  --coral-light:#d4a373;
-  --mint:#6bb89a;
-  --mint-deep:#5aa888;
-  --mint-soft:#2a3d35;
-  --lavender:#9b7db5;
-  --lavender-soft:#3a2f45;
-  --honey:#d4b25a;
-  --text:#e8dfe4;
-  --text-soft:#a89c9f;
-  --text-light:#7a6e72;
-  --border:#3d303a;
-  --shadow:0 6px 24px rgba(0,0,0,.3);
-  --shadow-lg:0 16px 48px rgba(0,0,0,.4);
-  --shadow-soft:0 2px 12px rgba(0,0,0,.2);
-}
-html{font-size:16px;scroll-behavior:smooth}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-  background:linear-gradient(160deg,#fdf2f5 0%,#fef0f4 35%,#f3e8ec 70%,#ede4f0 100%);
-  background-attachment:fixed;
-  color:var(--text);
-  min-height:100vh;line-height:1.8;
-  -webkit-font-smoothing:antialiased;
-  transition:background .5s ease,color .3s ease;
-  overflow-x:hidden;
-}
-[data-theme="dark"] body{
-  background:linear-gradient(160deg,#1e1822 0%,#281c2a 35%,#2a2030 70%,#1f1a28 100%);
-}
+  :root {
+    --rose-50: #FFF5F5;
+    --rose-100: #FFE8EC;
+    --rose-200: #FDD1D9;
+    --rose-300: #F4A7B6;
+    --rose-400: #E87A90;
+    --rose-500: #D45673;
+    --rose-600: #B03A56;
+    --rose-700: #8C2A42;
+    --cream: #FFF8F5;
+    --paper: #FFFEFC;
+    --ink: #2D1F24;
+    --ink-soft: #5C4A51;
+    --ink-light: #9A8A90;
+    --gold: #D4A853;
+    --gold-light: #F0D9A8;
+    --sage: #8BA98F;
+    --line: #F0E5E8;
+    --shadow-soft: 0 2px 24px rgba(176, 58, 86, 0.06);
+    --shadow-card: 0 12px 48px rgba(176, 58, 86, 0.12);
+    --shadow-rose: 0 8px 32px rgba(212, 86, 115, 0.2);
+  }
 
-/* 浮动装饰 */
-.float-deco{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(60px);opacity:.45;animation:floatY 18s ease-in-out infinite}
-.float-deco.d1{width:340px;height:340px;background:var(--rose-soft);top:5%;left:-100px;animation-delay:0s}
-.float-deco.d2{width:280px;height:280px;background:var(--lavender-soft);top:35%;right:-80px;animation-delay:-6s}
-.float-deco.d3{width:240px;height:240px;background:var(--mint-soft);bottom:10%;left:15%;animation-delay:-12s}
-.float-deco.d4{width:200px;height:200px;background:var(--honey);opacity:.12;top:15%;right:35%;animation-delay:-8s;filter:blur(50px)}
-@keyframes floatY{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-30px) translateX(15px)}}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* 可拖动主题按钮 */
-.float-tool-btn{
-  position:fixed;z-index:100;
-  width:46px;height:46px;border-radius:50%;
-  background:rgba(255,255,255,.75);backdrop-filter:blur(12px);
-  border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  cursor:grab;font-size:1.15rem;
-  transition:box-shadow .3s ease, background .3s ease, color .3s ease;
-  color:var(--text-soft);
-  box-shadow:0 4px 16px rgba(216,133,150,.15);
-  user-select:none;touch-action:none;
-}
-.float-tool-btn:hover{background:var(--rose-soft);color:var(--rose-deep);box-shadow:0 6px 20px rgba(232,160,176,.3)}
-.float-tool-btn:active{cursor:grabbing}
-.float-tool-btn.dragging{transition:none;cursor:grabbing;box-shadow:0 8px 28px rgba(216,133,150,.3)}
-[data-theme="dark"] .float-tool-btn{background:rgba(48,40,58,.85);border-color:var(--border)}
-#themeBtn{top:16px;right:16px}
+  body {
+    font-family: 'Noto Sans SC', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.7;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
 
-.app{max-width:720px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:1}
-@media(min-width:640px){.app{padding:40px 24px 60px}}
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(ellipse at 10% 20%, rgba(244, 167, 182, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 80%, rgba(212, 168, 83, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
-/* ===== 介绍页 ===== */
-.intro-screen{
-  background:rgba(255,255,255,.78);
-  backdrop-filter:blur(20px);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow-lg);
-  padding:56px 40px 48px;
-  animation:fadeUp .8s cubic-bezier(.4,0,.2,1);
-  border:1px solid rgba(255,255,255,.6);
-  position:relative;overflow:hidden;
-}
-[data-theme="dark"] .intro-screen{background:rgba(48,40,58,.85);border-color:rgba(255,255,255,.08)}
-.intro-screen::before{
-  content:"";position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-  background:radial-gradient(circle at 30% 20%,rgba(232,160,176,.1),transparent 40%),
-             radial-gradient(circle at 70% 80%,rgba(205,180,219,.1),transparent 40%);
-  pointer-events:none;
-}
-@media(max-width:640px){.intro-screen{padding:40px 22px 36px}}
+  .page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+  }
 
-.intro-hero{
-  text-align:center;margin-bottom:32px;
-}
-.heart-icon{
-  width:80px;height:80px;margin:0 auto 24px;
-  background:linear-gradient(135deg,var(--rose),var(--coral));
-  border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:2rem;box-shadow:0 8px 28px rgba(232,160,176,.4);
-  animation:pulse 3s ease-in-out infinite;
-}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  .hidden { display: none !important; }
 
-.intro-screen h1{
-  font-size:2rem;font-weight:700;color:var(--text);
-  margin-bottom:12px;line-height:1.4;letter-spacing:-.01em;
-}
-.intro-screen h1 span{
-  background:linear-gradient(135deg,var(--rose),var(--coral));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-}
-.intro-subtitle{font-size:1rem;color:var(--text-soft);margin-bottom:28px}
+  /* ========== 首页 ========== */
+  .top-mark {
+    position: fixed;
+    top: 28px;
+    left: 40px;
+    z-index: 100;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--rose-400);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .top-mark::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--rose-300);
+  }
 
-.intro-meta{
-  display:inline-flex;gap:16px;padding:10px 20px;
-  background:var(--rose-soft);border-radius:30px;
-  font-size:.85rem;color:var(--rose-deep);font-weight:500;
-  margin-bottom:32px;
-}
-.intro-meta span{display:flex;align-items:center;gap:6px}
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 0 80px;
+    gap: 60px;
+    position: relative;
+  }
 
-.feature-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
-  margin:32px 0;
-}
-@media(max-width:560px){.feature-grid{grid-template-columns:1fr}}
-.feature-card{
-  background:var(--warm-bg);border-radius:var(--radius-sm);
-  padding:24px 16px;text-align:center;
-  border:1px solid var(--border);transition:var(--transition);
-}
-.feature-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-soft)}
-.feature-card .icon{font-size:1.8rem;margin-bottom:10px}
-.feature-card h3{font-size:.95rem;color:var(--text);margin-bottom:6px;font-weight:600}
-.feature-card p{font-size:.8rem;color:var(--text-soft);line-height:1.6}
+  .hero-text { padding-top: 40px; }
 
-.intro-note{
-  background:linear-gradient(135deg,var(--rose-soft),var(--lavender-soft));
-  border-radius:var(--radius-sm);padding:24px 26px;
-  margin:24px 0;border:1px solid rgba(232,160,176,.2);
-}
-[data-theme="dark"] .intro-note{background:linear-gradient(135deg,rgba(232,160,176,.15),rgba(205,180,219,.15))}
-.intro-note h4{font-size:.95rem;color:var(--text);margin-bottom:10px;font-weight:600}
-.intro-note p{font-size:.85rem;color:var(--text-soft);line-height:1.7}
+  .hero-eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.4em;
+    color: var(--rose-500);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    width: 40px; height: 1px;
+    background: var(--rose-400);
+  }
 
-.history-card{
-  background:rgba(255,255,255,.6);
-  border-radius:var(--radius-sm);padding:16px 20px;
-  margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;
-  cursor:pointer;transition:var(--transition);
-  border:1px solid var(--border);
-}
-[data-theme="dark"] .history-card{background:rgba(48,40,58,.6)}
-.history-card:hover{background:var(--rose-soft);transform:translateY(-2px)}
-.history-left{display:flex;align-items:center;gap:12px}
-.history-icon{font-size:1.4rem}
-.history-info .h-title{font-size:.88rem;font-weight:600;color:var(--text)}
-.history-info .h-desc{font-size:.78rem;color:var(--text-soft)}
-.history-arrow{color:var(--text-light);font-size:1.1rem}
+  .hero-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(40px, 6vw, 72px);
+    font-weight: 900;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 28px;
+    letter-spacing: 0.02em;
+  }
+  .hero-title .line-break { display: block; }
+  .hero-title .big {
+    font-size: 1.2em;
+    background: linear-gradient(135deg, var(--rose-500), var(--rose-700));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+  }
+  .hero-title .underline {
+    position: relative;
+    display: inline-block;
+  }
+  .hero-title .underline::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: 6px;
+    width: 100%;
+    height: 12px;
+    background: var(--rose-100);
+    z-index: -1;
+    border-radius: 2px;
+    transform: skewX(-8deg);
+  }
 
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  padding:15px 40px;border:none;border-radius:50px;
-  font-size:1rem;font-weight:600;cursor:pointer;
-  transition:var(--transition);font-family:inherit;
-  text-decoration:none;letter-spacing:.02em;
-}
-.btn-primary{
-  background:linear-gradient(135deg,var(--rose),var(--coral));
-  color:#fff;box-shadow:0 10px 28px rgba(232,160,176,.35);
-}
-.btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(232,160,176,.45)}
-.btn-ghost{
-  background:rgba(255,255,255,.7);color:var(--text);
-  border:1.5px solid var(--border);
-}
-.btn-ghost:hover{border-color:var(--rose);color:var(--rose-deep)}
-.btn-large{padding:16px 48px;font-size:1.05rem}
-.btn-small{padding:10px 22px;font-size:.85rem}
-.btn-block{width:100%}
+  .hero-subtitle {
+    font-size: 17px;
+    color: var(--ink-soft);
+    line-height: 1.9;
+    margin-bottom: 36px;
+    max-width: 480px;
+  }
 
-/* ===== 答题页 ===== */
-.quiz-screen{display:none;animation:fadeUp .5s ease}
+  .hero-tags {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .hero-tag {
+    padding: 8px 18px;
+    background: var(--paper);
+    border: 1px solid var(--rose-200);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--rose-600);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 
-.quiz-header{
-  background:rgba(255,255,255,.85);
-  backdrop-filter:blur(16px);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow-soft);
-  padding:16px 20px;margin-bottom:20px;
-  position:sticky;top:10px;z-index:50;
-  border:1px solid rgba(255,255,255,.5);
-}
-[data-theme="dark"] .quiz-header{background:rgba(48,40,58,.85);border-color:rgba(255,255,255,.08)}
-.progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.progress-section{font-size:.8rem;color:var(--rose-deep);font-weight:600}
-.progress-count{font-size:.82rem;color:var(--text-soft)}
-.progress-bar-wrap{height:6px;background:var(--rose-soft);border-radius:20px;overflow:hidden}
-.progress-bar-fill{
-  height:100%;border-radius:20px;
-  background:linear-gradient(90deg,var(--rose),var(--coral),var(--honey));
-  transition:width .6s cubic-bezier(.4,0,.2,1);
-  width:0%;
-}
+  .hero-meta {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .meta-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--rose-100), var(--rose-200));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .meta-label { display: flex; flex-direction: column; }
+  .meta-label strong {
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .meta-label span {
+    font-size: 12px;
+    color: var(--ink-light);
+  }
 
-/* 单题卡片 */
-.single-question-wrap{
-  min-height:400px;
-  display:flex;flex-direction:column;justify-content:center;
-  padding:16px 0;
-}
-.question-card-single{
-  background:rgba(255,255,255,.9);
-  backdrop-filter:blur(14px);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow-lg);
-  padding:44px 38px 38px;
-  border:1px solid rgba(255,255,255,.6);
-  position:relative;overflow:hidden;
-  transform:translateX(0);opacity:1;
-  transition:transform .35s cubic-bezier(.4,0,.2,1), opacity .25s ease;
-  will-change:transform,opacity;
-}
-[data-theme="dark"] .question-card-single{background:rgba(48,40,58,.9);border-color:rgba(255,255,255,.08)}
-.question-card-single::before{
-  content:"";position:absolute;top:0;left:0;right:0;height:4px;
-  background:linear-gradient(90deg,var(--rose),var(--coral),var(--honey));
-  opacity:.5;
-}
-.question-card-single.slide-out-left{transform:translateX(-30px);opacity:0}
-.question-card-single.slide-out-right{transform:translateX(30px);opacity:0}
-.question-card-single.slide-in-left{transform:translateX(-30px);opacity:0}
-.question-card-single.slide-in-right{transform:translateX(30px);opacity:0}
+  .cta-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 44px;
+    background: linear-gradient(135deg, var(--rose-500), var(--rose-700));
+    color: white;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 0 8px 28px rgba(212, 86, 115, 0.35);
+  }
+  .cta-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(212, 86, 115, 0.45);
+  }
+  .cta-primary:active {
+    transform: translateY(-1px);
+  }
+  .cta-primary svg {
+    transition: transform 0.3s ease;
+  }
+  .cta-primary:hover svg {
+    transform: translateX(4px);
+  }
 
-.q-header{
-  display:flex;align-items:center;gap:14px;
-  margin-bottom:24px;padding-bottom:18px;
-  border-bottom:1px solid var(--border);
-}
-.q-number-big{
-  width:42px;height:42px;border-radius:12px;
-  background:linear-gradient(135deg,var(--rose),var(--coral));
-  color:#fff;font-size:1rem;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px rgba(232,160,176,.3);
-  flex-shrink:0;
-}
-.q-meta{flex:1;min-width:0}
-.q-progress-text{font-size:.8rem;color:var(--text-light);font-weight:500}
-.q-progress-text strong{color:var(--rose-deep);font-size:.88rem;font-weight:700;margin-right:2px}
-.q-total-hint{font-size:.75rem;color:var(--text-light);white-space:nowrap}
+  /* Hero 右侧 - 模拟卡片 */
+  .hero-visual {
+    position: relative;
+    height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-.question-title{
-  font-size:1.35rem;font-weight:600;color:var(--text);
-  line-height:1.65;margin-bottom:10px;
-}
-.question-hint{
-  font-size:.82rem;color:var(--text-light);
-  margin-bottom:24px;padding:10px 14px;
-  background:var(--warm-bg);border-radius:10px;
-  border-left:3px solid var(--rose-light);
-}
-@media(max-width:640px){
-  .question-title{font-size:1.15rem;line-height:1.6}
-  .question-card-single{padding:32px 24px 28px}
-  .q-header{margin-bottom:20px;padding-bottom:14px}
-}
+  .report-card {
+    position: absolute;
+    background: var(--paper);
+    border-radius: 20px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
-/* 选项样式 */
-.options-list{display:flex;flex-direction:column;gap:10px}
-.option-item{
-  display:flex;align-items:center;gap:14px;
-  padding:16px 20px;border:2px solid var(--border);
-  border-radius:14px;background:var(--warm-bg);
-  cursor:pointer;transition:var(--transition);
-  font-size:.95rem;font-weight:500;color:var(--text-soft);
-  user-select:none;
-}
-[data-theme="dark"] .option-item{background:var(--warm-bg)}
-.option-item:hover{border-color:var(--rose-light);color:var(--rose-deep);transform:translateX(4px)}
-.option-item.selected{
-  background:linear-gradient(135deg,var(--rose),var(--rose-light));
-  color:#fff;border-color:transparent;
-  box-shadow:0 6px 20px rgba(232,160,176,.35);
-}
-.option-radio{
-  width:22px;height:22px;border-radius:50%;
-  border:2px solid currentColor;opacity:.6;
-  flex-shrink:0;position:relative;
-  transition:var(--transition);
-}
-.option-item.selected .option-radio{opacity:1}
-.option-item.selected .option-radio::after{
-  content:"";position:absolute;inset:3px;border-radius:50%;
-  background:#fff;
-}
+  .report-card:hover {
+    transform: translateY(-8px) rotate(0deg) scale(1.02) !important;
+    z-index: 10 !important;
+  }
 
-/* 多选选项 */
-.option-item.multi .option-radio{border-radius:6px}
-.option-item.multi.selected .option-radio::after{
-  content:"✓";position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.75rem;font-weight:700;background:transparent;color:#fff;
-}
+  .report-main {
+    top: 20px;
+    right: 0;
+    width: 320px;
+    transform: rotate(2deg);
+    z-index: 3;
+  }
 
-/* 输入框 */
-.input-field{
-  width:100%;padding:14px 18px;
-  border:2px solid var(--border);border-radius:14px;
-  background:var(--warm-bg);color:var(--text);
-  font-size:.95rem;font-family:inherit;
-  transition:var(--transition);
-}
-.input-field:focus{
-  outline:none;border-color:var(--rose);
-  box-shadow:0 0 0 4px rgba(232,160,176,.15);
-}
-.input-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.input-row .input-field{flex:1}
-.input-unit{font-size:.9rem;color:var(--text-soft);font-weight:500}
+  .report-sub {
+    bottom: 40px;
+    left: 0;
+    width: 280px;
+    transform: rotate(-3deg);
+    z-index: 2;
+  }
 
-/* 数字范围 */
-.range-wrap{
-  display:flex;align-items:center;gap:14px;
-  padding:14px 18px;background:var(--warm-bg);
-  border-radius:12px;margin-bottom:10px;
-  border:1px solid var(--border);
-}
-.range-label{font-size:.88rem;color:var(--text-soft);min-width:60px;font-weight:500}
-.range-wrap input[type="range"]{flex:1;accent-color:var(--rose)}
-.range-value{font-size:.95rem;font-weight:700;color:var(--rose-deep);min-width:60px;text-align:right}
+  .report-header {
+    padding: 24px 24px 16px;
+    background: linear-gradient(135deg, var(--rose-100), #FFF0F0);
+    position: relative;
+  }
+  .report-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--rose-500);
+    color: white;
+    font-size: 11px;
+    border-radius: 100px;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  .report-score {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .report-score-num {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--rose-600);
+    line-height: 1;
+  }
+  .report-score-unit {
+    font-size: 14px;
+    color: var(--rose-500);
+    font-weight: 500;
+  }
+  .report-rank {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
 
-/* 下拉选择 */
-.select-field{
-  width:100%;padding:14px 18px;
-  border:2px solid var(--border);border-radius:14px;
-  background:var(--warm-bg);color:var(--text);
-  font-size:.95rem;font-family:inherit;cursor:pointer;
-  transition:var(--transition);
-}
-.select-field:focus{outline:none;border-color:var(--rose)}
+  .report-body {
+    padding: 20px 24px 24px;
+  }
 
-.quiz-actions{
-  display:flex;justify-content:space-between;
-  margin-top:22px;gap:12px;
-}
-.quiz-actions .btn{flex:1;max-width:180px}
-.skip-btn{
-  display:block;margin:12px auto 0;
-  background:none;border:none;color:var(--text-light);
-  font-size:.85rem;cursor:pointer;font-family:inherit;
-  text-decoration:underline;text-underline-offset:3px;
-}
-.skip-btn:hover{color:var(--rose-deep)}
+  .radar-mini {
+    width: 100%;
+    height: 160px;
+    margin-bottom: 16px;
+  }
 
-/* 导航面板 */
-.nav-toggle{
-  position:fixed;bottom:20px;right:20px;z-index:90;
-  width:54px;height:54px;border-radius:50%;
-  background:linear-gradient(135deg,var(--rose),var(--coral));
-  color:#fff;border:none;cursor:pointer;
-  box-shadow:0 8px 24px rgba(232,160,176,.4);
-  font-size:1.3rem;transition:var(--transition);
-  display:flex;align-items:center;justify-content:center;
-}
-.nav-toggle:hover{transform:scale(1.1)}
-.nav-panel{
-  position:fixed;bottom:0;left:0;right:0;z-index:95;
-  background:rgba(255,255,255,.95);backdrop-filter:blur(20px);
-  border-radius:24px 24px 0 0;padding:20px;
-  transform:translateY(100%);
-  transition:transform .4s cubic-bezier(.4,0,.2,1);
-  box-shadow:0 -8px 32px rgba(0,0,0,.08);
-  max-height:65vh;overflow-y:auto;
-}
-[data-theme="dark"] .nav-panel{background:rgba(48,40,58,.97)}
-.nav-panel.open{transform:translateY(0)}
-.nav-panel-header{
-  display:flex;justify-content:space-between;align-items:center;
-  margin-bottom:16px;padding-bottom:12px;
-  border-bottom:1px solid var(--border);
-}
-.nav-panel-title{font-weight:600;font-size:1rem}
-.nav-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-soft)}
-.nav-grid{
-  display:grid;grid-template-columns:repeat(8,1fr);gap:6px;
-}
-@media(max-width:480px){.nav-grid{grid-template-columns:repeat(6,1fr)}}
-.nav-dot{
-  aspect-ratio:1;border-radius:8px;
-  background:var(--warm-bg);
-  border:1.5px solid var(--border);
-  font-size:.72rem;font-weight:600;color:var(--text-light);
-  cursor:pointer;transition:var(--transition);
-  display:flex;align-items:center;justify-content:center;
-}
-.nav-dot:hover{border-color:var(--rose-light)}
-.nav-dot.answered{background:var(--rose-soft);border-color:var(--rose);color:var(--rose-deep)}
-.nav-dot.current{background:linear-gradient(135deg,var(--rose),var(--coral));color:#fff;border-color:transparent;transform:scale(1.1)}
-.nav-legend{display:flex;gap:16px;margin-top:14px;font-size:.78rem;color:var(--text-soft);justify-content:center}
-.nav-legend span{display:flex;align-items:center;gap:6px}
-.nav-legend .dot{width:12px;height:12px;border-radius:4px}
-.nav-legend .dot.answered{background:var(--rose)}
-.nav-legend .dot.current{background:linear-gradient(135deg,var(--rose),var(--coral))}
-.nav-legend .dot.unanswered{background:var(--warm-bg);border:1.5px solid var(--border)}
+  .report-tags-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .report-tag {
+    padding: 4px 10px;
+    background: var(--rose-50);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--rose-600);
+  }
+  .report-tag.good {
+    background: #EAF5EC;
+    color: var(--sage);
+  }
 
-/* ===== 结果页 ===== */
-.result-screen{display:none;animation:fadeUp .6s ease}
-.result-header{text-align:center;margin-bottom:32px}
-.result-eyebrow{font-size:.85rem;color:var(--rose-deep);font-weight:600;letter-spacing:.05em;margin-bottom:10px}
-.result-header h1{font-size:1.8rem;color:var(--text);margin-bottom:10px;font-weight:700}
-.result-header p{color:var(--text-soft);font-size:.95rem}
+  /* 小卡片内容 */
+  .sub-card-body {
+    padding: 20px 22px;
+  }
+  .sub-card-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sub-card-title::before {
+    content: '💝';
+    font-size: 16px;
+  }
+  .sub-list {
+    list-style: none;
+  }
+  .sub-list li {
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 4px 0;
+    padding-left: 14px;
+    position: relative;
+  }
+  .sub-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--rose-400);
+    font-weight: 600;
+    font-size: 10px;
+  }
 
-.result-summary{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:10px;margin-bottom:28px;
-}
-@media(max-width:560px){.result-summary{grid-template-columns:repeat(3,1fr)}}
-.summary-card{
-  background:rgba(255,255,255,.9);
-  border-radius:var(--radius-sm);
-  box-shadow:var(--shadow-soft);padding:20px 14px;
-  text-align:center;transition:var(--transition);
-  border:1px solid var(--border);backdrop-filter:blur(10px);
-}
-[data-theme="dark"] .summary-card{background:rgba(48,40,58,.9)}
-.summary-card:hover{transform:translateY(-2px)}
-.summary-card .label{font-size:.75rem;color:var(--text-soft);margin-bottom:6px}
-.summary-card .value{font-size:1.5rem;font-weight:700;color:var(--rose-deep)}
+  /* 装饰 */
+  .deco-float {
+    position: absolute;
+    font-size: 32px;
+    animation: floatDeco 4s ease-in-out infinite;
+    opacity: 0.6;
+  }
+  .deco-1 { top: 10%; left: 5%; animation-delay: 0s; }
+  .deco-2 { top: 20%; right: 8%; animation-delay: 1s; font-size: 24px; }
+  .deco-3 { bottom: 15%; left: 15%; animation-delay: 2s; font-size: 20px; }
+  .deco-4 { bottom: 25%; right: 3%; animation-delay: 1.5s; font-size: 28px; }
 
-.report-nav{
-  display:flex;gap:6px;flex-wrap:wrap;
-  padding:8px;background:rgba(255,255,255,.6);
-  border-radius:14px;margin-bottom:24px;
-  border:1px solid var(--border);
-  backdrop-filter:blur(10px);
-}
-[data-theme="dark"] .report-nav{background:rgba(48,40,58,.6)}
-.report-nav a{
-  flex:1;min-width:fit-content;
-  padding:10px 14px;border-radius:10px;
-  font-size:.85rem;font-weight:500;
-  color:var(--text-soft);text-decoration:none;
-  text-align:center;transition:var(--transition);
-}
-.report-nav a:hover{background:var(--rose-soft);color:var(--rose-deep)}
+  @keyframes floatDeco {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-12px) rotate(5deg); }
+  }
 
-.report-section{
-  background:rgba(255,255,255,.9);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow-soft);
-  padding:28px 26px;margin-bottom:18px;
-  border:1px solid var(--border);
-  backdrop-filter:blur(10px);
-}
-[data-theme="dark"] .report-section{background:rgba(48,40,58,.9)}
-.report-section h2{
-  font-size:1.15rem;color:var(--text);margin-bottom:8px;font-weight:700;
-  display:flex;align-items:center;gap:10px;
-}
-.report-section .section-note{
-  font-size:.82rem;color:var(--text-light);
-  margin-bottom:18px;line-height:1.6;
-}
+  .scroll-hint {
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--ink-light);
+    animation: floatUp 3s ease-in-out infinite;
+  }
+  .scroll-hint::after {
+    content: '';
+    width: 1px; height: 36px;
+    background: linear-gradient(to bottom, var(--rose-300), transparent);
+  }
+  @keyframes floatUp {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
 
-/* 洞察卡片 */
-.insight-list{display:flex;flex-direction:column;gap:12px}
-.insight-item{
-  padding:16px 18px;background:var(--warm-bg);
-  border-radius:12px;border-left:4px solid var(--rose);
-  transition:var(--transition);
-}
-.insight-item:hover{transform:translateX(3px)}
-.insight-item h4{font-size:.92rem;color:var(--text);margin-bottom:6px;font-weight:600}
-.insight-item .basis{font-size:.78rem;color:var(--text-light);margin-bottom:8px}
-.insight-item .meaning{font-size:.85rem;color:var(--text-soft);line-height:1.7;margin-bottom:8px}
-.insight-item .action{
-  font-size:.82rem;color:var(--rose-deep);
-  background:rgba(232,160,176,.1);padding:8px 12px;
-  border-radius:8px;line-height:1.6;
-}
+  /* ========== 9大维度 ========== */
+  .dimensions {
+    padding: 80px 80px 60px;
+    position: relative;
+  }
+  .dimensions .section-header {
+    margin-bottom: 0;
+  }
 
-/* 择偶优先级 */
-.priority-section{margin-bottom:14px}
-.priority-header{
-  display:flex;justify-content:space-between;align-items:center;
-  margin-bottom:8px;
-}
-.priority-label{font-size:.9rem;font-weight:600;color:var(--text)}
-.priority-select{
-  padding:6px 12px;border-radius:10px;
-  border:1.5px solid var(--border);
-  background:var(--card);color:var(--text);
-  font-size:.8rem;font-family:inherit;cursor:pointer;
-}
-.priority-select:focus{outline:none;border-color:var(--rose)}
-.priority-bar-wrap{height:8px;background:var(--warm-bg);border-radius:10px;overflow:hidden}
-.priority-bar-fill{height:100%;border-radius:10px;transition:width .5s ease}
-.priority-bar-fill.must{background:linear-gradient(90deg,var(--rose),var(--rose-deep))}
-.priority-bar-fill.important{background:linear-gradient(90deg,var(--coral),var(--honey))}
-.priority-bar-fill.negotiable{background:linear-gradient(90deg,var(--mint),var(--mint-deep))}
-.priority-bar-fill.unsorted{background:var(--border)}
+  .section-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 80px;
+  }
 
-/* 优先级图表 */
-.chart-section{
-  background:rgba(255,255,255,.9);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow-soft);
-  padding:28px 24px;margin-bottom:18px;
-  border:1px solid var(--border);
-  backdrop-filter:blur(10px);
-}
-[data-theme="dark"] .chart-section{background:rgba(48,40,58,.9)}
-.chart-section h3{font-size:1rem;text-align:center;margin-bottom:4px}
-.chart-section .chart-desc{text-align:center;font-size:.82rem;color:var(--text-soft);margin-bottom:18px}
-.chart-container{position:relative;width:100%;max-width:380px;margin:0 auto;aspect-ratio:1}
+  .section-title-small {
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0;
+  }
 
-/* 自我介绍 */
-.intro-textarea{
-  width:100%;min-height:160px;padding:16px 18px;
-  border:2px solid var(--border);border-radius:14px;
-  background:var(--warm-bg);color:var(--text);
-  font-size:.92rem;font-family:inherit;line-height:1.8;
-  resize:vertical;transition:var(--transition);
-}
-.intro-textarea:focus{outline:none;border-color:var(--rose)}
+  .dim-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    justify-content: center;
+    max-width: 700px;
+    margin: 24px auto 0;
+  }
+  .dim-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--paper);
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    transition: all 0.3s ease;
+  }
+  .dim-item:hover {
+    border-color: var(--rose-300);
+    color: var(--rose-600);
+  }
+  .dim-item span { font-size: 16px; }
 
-/* 话题列表 */
-.topic-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:560px){.topic-list{grid-template-columns:1fr}}
-.topic-item{
-  padding:12px 16px;background:var(--warm-bg);
-  border-radius:12px;font-size:.85rem;
-  color:var(--text-soft);display:flex;align-items:flex-start;gap:10px;
-  transition:var(--transition);cursor:pointer;
-}
-.topic-item:hover{background:var(--rose-soft);color:var(--rose-deep)}
-.topic-item .icon{font-size:1rem;flex-shrink:0}
+  /* ========== 双画像区 ========== */
+  .portraits {
+    padding: 40px 80px 80px;
+    background: linear-gradient(180deg, transparent, var(--rose-50), transparent);
+  }
+  .portraits .section-header {
+    margin-bottom: 0;
+  }
 
-/* 行动清单 */
-.action-list{display:flex;flex-direction:column;gap:8px}
-.action-item{
-  display:flex;align-items:flex-start;gap:12px;
-  padding:12px 14px;border-radius:10px;
-  transition:var(--transition);cursor:pointer;
-}
-.action-item:hover{background:var(--warm-bg)}
-.action-item input[type="checkbox"]{
-  margin-top:3px;accent-color:var(--rose);
-  width:18px;height:18px;flex-shrink:0;cursor:pointer;
-}
-.action-item .action-text{font-size:.88rem;color:var(--text-soft);line-height:1.6}
-.action-item.done .action-text{text-decoration:line-through;color:var(--text-light)}
+  .portraits-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
 
-/* 导出区域 */
-.export-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
-.export-actions .btn{font-size:.9rem;padding:13px 16px}
+  .portraits-grid-small {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 500px;
+    margin: 24px auto 0;
+  }
+  .portrait-card-mini {
+    background: var(--paper);
+    border-radius: 14px;
+    padding: 20px 22px;
+    border: 1px solid var(--line);
+    transition: all 0.3s ease;
+  }
+  .portrait-card-mini:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+  .portrait-card-mini.high { border-top: 3px solid var(--rose-400); }
+  .portrait-card-mini.wide { border-top: 3px solid var(--gold); }
+  .portrait-card-mini p {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .portrait-label-mini {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .portrait-card-mini.high .portrait-label-mini { color: var(--rose-500); }
+  .portrait-card-mini.wide .portrait-label-mini { color: var(--gold); }
 
-/* 历史记录 */
-.history-screen{display:none;animation:fadeUp .5s ease}
-.history-screen h2{font-size:1.4rem;margin-bottom:20px;text-align:center}
-.history-empty{text-align:center;padding:60px 20px;color:var(--text-soft)}
-.history-empty .emoji{font-size:3rem;margin-bottom:12px}
-.history-item{
-  background:rgba(255,255,255,.9);
-  border-radius:var(--radius-sm);padding:18px 20px;
-  margin-bottom:10px;border:1px solid var(--border);
-  box-shadow:var(--shadow-soft);
-  transition:var(--transition);cursor:pointer;
-}
-[data-theme="dark"] .history-item{background:rgba(48,40,58,.9)}
-.history-item:hover{transform:translateX(4px);box-shadow:var(--shadow)}
-.history-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.history-date{font-size:.82rem;color:var(--text-soft)}
-.history-brief{font-size:.88rem;color:var(--text);font-weight:500}
+  footer {
+    padding: 36px 80px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-light);
+    letter-spacing: 0.1em;
+    border-top: 1px solid var(--line);
+  }
 
-/* 分享卡片弹窗 */
-.share-modal{
-  position:fixed;inset:0;z-index:200;
-  background:rgba(0,0,0,.5);backdrop-filter:blur(6px);
-  display:none;align-items:center;justify-content:center;padding:20px;
-}
-.share-modal.show{display:flex;animation:fadeIn .3s ease}
-.share-card-wrap{
-  background:var(--card);border-radius:var(--radius);
-  padding:24px;max-width:380px;width:100%;
-  box-shadow:var(--shadow-lg);
-}
-#shareCard{
-  background:linear-gradient(160deg,#fdf2f5 0%,#fef0f4 50%,#ede4f0 100%);
-  border-radius:20px;padding:40px 28px;text-align:center;margin-bottom:16px;
-}
-#shareCard h2{font-size:1.2rem;color:#4a3f45;margin-bottom:6px}
-#shareCard .sc-tags{
-  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px;
-}
-#shareCard .sc-tag{
-  font-size:.72rem;padding:5px 14px;border-radius:14px;
-  background:rgba(232,160,176,.2);color:#d88596;font-weight:500;
-}
-#shareCard .sc-footer{
-  margin-top:24px;font-size:.72rem;color:#b0a5aa;
-  padding-top:16px;border-top:1px solid rgba(216,133,150,.2);
-}
+  /* ========== 答题页 ========== */
+  .quiz-page {
+    min-height: 100vh;
+    display: flex;
+  }
 
-/* toast */
-.toast{
-  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);
-  background:rgba(74,63,69,.92);color:#fff;
-  padding:12px 24px;border-radius:30px;
-  font-size:.9rem;z-index:300;
-  transition:transform .4s cubic-bezier(.4,0,.2,1);
-  backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,.2);
-}
-.toast.show{transform:translateX(-50%) translateY(0)}
+  .quiz-sidebar {
+    width: 280px;
+    background: var(--paper);
+    border-right: 1px solid var(--line);
+    padding: 36px 28px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 50;
+    overflow-y: auto;
+  }
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .sidebar-brand {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 36px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar-brand::before {
+    content: '💘';
+    font-size: 18px;
+  }
 
-::-webkit-scrollbar{width:8px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(216,133,150,.2);border-radius:10px}
-::-webkit-scrollbar-thumb:hover{background:rgba(216,133,150,.35)}
+  .sidebar-progress { margin-bottom: 32px; }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: var(--line);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--rose-300), var(--rose-500));
+    border-radius: 100px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
 
-@media print{
-  .float-deco,.float-tool-btn,.nav-toggle,.nav-panel,.report-nav,.export-actions,.skip-btn,.quiz-actions{display:none}
-  body{background:#fff}
-  .report-section{box-shadow:none;border:1px solid #eee;break-inside:avoid}
-}
+  .question-nav { flex: 1; }
+  .nav-title {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--ink-light);
+    margin-bottom: 14px;
+  }
+  .nav-list { list-style: none; }
+  .nav-item {
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    border-radius: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+  }
+  .nav-item:hover {
+    background: var(--rose-50);
+    color: var(--ink);
+  }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--rose-500), var(--rose-600));
+    color: white;
+  }
+  .nav-item.done {
+    color: var(--sage);
+  }
+  .nav-item.done .nav-dot {
+    background: var(--sage);
+    border-color: var(--sage);
+  }
+  .nav-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink-light);
+    flex-shrink: 0;
+  }
+  .nav-item.active .nav-dot {
+    border-color: white;
+    background: var(--gold-light);
+  }
+  .nav-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sidebar-footer {
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .back-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-light);
+    cursor: pointer;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    font-family: inherit;
+  }
+  .back-home:hover { color: var(--rose-500); }
+
+  /* 答题主区域 */
+  .quiz-main {
+    flex: 1;
+    margin-left: 280px;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  .mobile-menu-btn {
+    display: none;
+    position: absolute;
+    top: 16px;
+    left: 20px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    align-items: center;
+    gap: 6px;
+    z-index: 10;
+  }
+  .mobile-menu-btn:hover {
+    border-color: var(--rose-300);
+    color: var(--rose-600);
+  }
+  .sidebar-overlay { display: none; }
+
+  .question-container {
+    max-width: 640px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .question-section {
+    display: inline-block;
+    padding: 6px 16px;
+    background: var(--rose-100);
+    color: var(--rose-600);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+
+  .question-number {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    color: var(--ink-light);
+    margin-bottom: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .question-text {
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+
+  .question-hint {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 40px;
+    line-height: 1.8;
+    padding: 14px 18px;
+    background: var(--rose-50);
+    border-radius: 10px;
+    border-left: 3px solid var(--rose-300);
+  }
+
+  /* 选项 */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+  .option-item {
+    padding: 18px 24px;
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+  }
+  .option-item:hover {
+    border-color: var(--rose-400);
+    transform: translateX(6px);
+    background: var(--rose-50);
+  }
+  .option-item.selected {
+    border-color: var(--rose-500);
+    background: linear-gradient(135deg, #FFF0F3, #FFE4EA);
+    transform: translateX(6px);
+    box-shadow: 0 4px 16px rgba(212, 86, 115, 0.2), 0 0 0 2px rgba(212, 86, 115, 0.15);
+  }
+  .option-item.selected .option-radio {
+    border-color: var(--rose-500);
+    background: var(--rose-500);
+    box-shadow: 0 0 0 4px rgba(212, 86, 115, 0.2), 0 0 12px rgba(212, 86, 115, 0.4);
+  }
+  .option-item.selected .option-radio::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: white;
+    animation: radioPop 0.3s ease;
+  }
+
+  @keyframes radioPop {
+    0% { transform: translate(-50%, -50%) scale(0); }
+    60% { transform: translate(-50%, -50%) scale(1.4); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+  }
+
+  .option-radio {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--ink-light);
+    flex-shrink: 0;
+    margin-top: 1px;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+
+  .option-text {
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.7;
+    flex: 1;
+  }
+  .option-item.selected .option-text { font-weight: 500; }
+
+  /* 文本输入 */
+  .text-input {
+    width: 100%;
+    min-height: 120px;
+    padding: 18px 22px;
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.8;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+    margin-bottom: 48px;
+  }
+  .text-input:focus {
+    outline: none;
+    border-color: var(--rose-400);
+  }
+  .text-input::placeholder { color: var(--ink-light); }
+
+  .input-label {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  /* 数字输入 */
+  .number-input-wrap {
+    margin-bottom: 48px;
+  }
+  .number-input {
+    width: 100%;
+    padding: 16px 22px;
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+    transition: border-color 0.2s ease;
+  }
+  .number-input:focus {
+    outline: none;
+    border-color: var(--rose-400);
+  }
+
+  /* 导航按钮 */
+  .quiz-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    background: none;
+  }
+
+  .nav-btn-prev { color: var(--ink-soft); }
+  .nav-btn-prev:hover {
+    color: var(--ink);
+    transform: translateX(-4px);
+  }
+
+  .nav-btn-next {
+    background: linear-gradient(135deg, var(--rose-500), var(--rose-700));
+    color: white;
+    box-shadow: 0 4px 16px rgba(212, 86, 115, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .nav-btn-next:hover:not(:disabled) {
+    transform: translateX(4px);
+    box-shadow: 0 8px 28px rgba(212, 86, 115, 0.45), 0 0 0 3px rgba(212, 86, 115, 0.15);
+  }
+  .nav-btn-next:not(:disabled).glow {
+    animation: btnGlow 0.6s ease;
+  }
+  @keyframes btnGlow {
+    0% { box-shadow: 0 4px 16px rgba(212, 86, 115, 0.3); }
+    50% { box-shadow: 0 6px 32px rgba(212, 86, 115, 0.6), 0 0 0 4px rgba(212, 86, 115, 0.2); }
+    100% { box-shadow: 0 4px 16px rgba(212, 86, 115, 0.3); }
+  }
+  .nav-btn-next:disabled {
+    background: var(--line);
+    color: var(--ink-light);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  /* 动画 */
+  .fade-in {
+    animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== 结果页 ========== */
+  .result-page {
+    min-height: 100vh;
+    padding: 60px 40px 100px;
+  }
+
+  .result-container {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .result-header {
+    text-align: center;
+    padding: 60px 40px 50px;
+    background: linear-gradient(180deg, var(--rose-100), var(--rose-50));
+    border-radius: 24px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-header::before {
+    content: '✨';
+    position: absolute;
+    top: 30px; right: 50px;
+    font-size: 36px;
+    opacity: 0.5;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  .result-header::after {
+    content: '💫';
+    position: absolute;
+    bottom: 40px; left: 40px;
+    font-size: 28px;
+    opacity: 0.4;
+    animation: twinkle 3s ease-in-out infinite 1s;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.2); }
+  }
+
+  .result-rank-label {
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--rose-500);
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .result-rank-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 900;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .result-rank-title em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--rose-500), var(--rose-700));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .result-rank-desc {
+    font-size: 15px;
+    color: var(--ink-soft);
+    max-width: 520px;
+    margin: 0 auto 36px;
+    line-height: 1.9;
+  }
+
+  /* 环形得分 */
+  .score-ring-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .score-ring {
+    position: relative;
+    width: 200px;
+    height: 200px;
+  }
+  .score-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .score-ring-bg {
+    fill: none;
+    stroke: var(--rose-200);
+    stroke-width: 14;
+  }
+  .score-ring-fill {
+    fill: none;
+    stroke: url(#scoreGradient);
+    stroke-width: 14;
+    stroke-linecap: round;
+    stroke-dasharray: 565;
+    stroke-dashoffset: 565;
+    transition: stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .score-ring-text {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .score-num {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 56px;
+    font-weight: 900;
+    color: var(--rose-600);
+    line-height: 1;
+  }
+  .score-unit {
+    font-size: 13px;
+    color: var(--rose-500);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+
+  /* 雷达图卡片 */
+  .result-card {
+    background: var(--paper);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 32px;
+    border: 1px solid var(--line);
+  }
+
+  .result-card-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .result-card-sub {
+    font-size: 13px;
+    color: var(--ink-light);
+    margin-bottom: 32px;
+  }
+
+  .radar-chart {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    display: block;
+  }
+
+  /* 维度分数列表 */
+  .dim-scores {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+  }
+  .dim-score-item {
+    text-align: center;
+    padding: 16px 12px;
+    background: var(--rose-50);
+    border-radius: 12px;
+  }
+  .dim-score-num {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--rose-600);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .dim-score-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  /* 优势短板 */
+  .swot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .swot-box {
+    padding: 28px;
+    border-radius: 16px;
+  }
+  .swot-box.strength {
+    background: #F0F9F1;
+    border: 1px solid #D4E8D7;
+  }
+  .swot-box.weakness {
+    background: #FFF0E8;
+    border: 1px solid #FFD4BE;
+  }
+  .swot-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .strength .swot-title { color: #4A7C52; }
+  .weakness .swot-title { color: #C4653A; }
+  .swot-list {
+    list-style: none;
+  }
+  .swot-list li {
+    font-size: 13px;
+    padding: 6px 0;
+    padding-left: 18px;
+    position: relative;
+    line-height: 1.7;
+  }
+  .strength .swot-list li { color: #3D6B44; }
+  .weakness .swot-list li { color: #A0522D; }
+  .swot-list li::before {
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+  }
+  .strength .swot-list li::before { content: '✓'; color: #6BA873; }
+  .weakness .swot-list li::before { content: '!'; color: #E08A5C; }
+
+  /* 双画像结果 */
+  .match-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .match-card {
+    background: var(--paper);
+    border-radius: 20px;
+    padding: 32px 28px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--line);
+    border-top: 4px solid;
+  }
+  .match-card.high-match {
+    border-top-color: var(--rose-400);
+  }
+  .match-card.wide-match {
+    border-top-color: var(--gold);
+  }
+
+  .match-label {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  .high-match .match-label {
+    background: var(--rose-100);
+    color: var(--rose-600);
+  }
+  .wide-match .match-label {
+    background: #FFF3D6;
+    color: #B8860B;
+  }
+
+  .match-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .match-sub {
+    font-size: 12px;
+    color: var(--ink-light);
+    margin-bottom: 20px;
+  }
+
+  .match-items {
+    list-style: none;
+  }
+  .match-items li {
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+  .match-items li:last-child { border-bottom: none; }
+  .match-items li strong {
+    display: block;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  /* 底部按钮 */
+  .result-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 48px;
+    flex-wrap: wrap;
+  }
+  .result-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+  }
+  .result-btn-primary {
+    background: linear-gradient(135deg, var(--rose-500), var(--rose-700));
+    color: white;
+    box-shadow: 0 4px 16px rgba(212, 86, 115, 0.3);
+  }
+  .result-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(212, 86, 115, 0.4);
+  }
+  .result-btn-secondary {
+    background: var(--paper);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+  .result-btn-secondary:hover {
+    border-color: var(--rose-300);
+    color: var(--ink);
+  }
+
+  /* 响应式 */
+  @media (max-width: 1024px) {
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 120px 40px 80px;
+      gap: 40px;
+    }
+    .hero-visual { height: 460px; }
+    .dimensions, .portraits {
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+    .portraits-grid-small { max-width: 400px; }
+    .quiz-sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    .quiz-sidebar.open { transform: translateX(0); }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 40;
+    }
+    .sidebar-overlay.show { display: block; }
+    .quiz-main {
+      margin-left: 0;
+      padding: 60px 32px;
+    }
+    .mobile-menu-btn { display: flex; }
+    .result-page { padding: 40px 24px 80px; }
+    .result-card { padding: 28px 24px; }
+    .match-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 100px 24px 60px; }
+    .hero-title { font-size: 38px; }
+    .hero-tags { flex-wrap: wrap; gap: 8px; }
+    .hero-tag { font-size: 12px; padding: 6px 12px; }
+    .dimensions, .portraits {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+    .dimensions { padding-top: 60px; }
+    .portraits { padding-top: 20px; padding-bottom: 60px; }
+    .section-title-small { font-size: 18px; }
+    .dim-list { gap: 8px 10px; }
+    .dim-item { font-size: 13px; padding: 8px 14px; }
+    .dim-item span { font-size: 14px; }
+    .portraits-grid-small { grid-template-columns: 1fr; max-width: 300px; }
+    .quiz-main { padding: 48px 20px; }
+    .dim-scores { grid-template-columns: repeat(2, 1fr); }
+    .swot-grid { grid-template-columns: 1fr; }
+    .report-main { width: 260px; }
+    .report-sub { width: 230px; }
+  }
 </style>
 </head>
 <body>
-<div class="float-deco d1"></div>
-<div class="float-deco d2"></div>
-<div class="float-deco d3"></div>
-<div class="float-deco d4"></div>
 
-<button class="float-tool-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题（可拖动）">🌙</button>
+<!-- 首页 -->
+<div class="page" id="homePage">
+  
 
-<div class="app">
-
-<!-- 介绍页 -->
-<section class="intro-screen" id="introScreen">
-  <div class="intro-hero">
-    <div class="heart-icon">💌</div>
-    <h1>相亲之前，<br>先想清楚<span>你想要的关系</span></h1>
-    <p class="intro-subtitle">梳理自己的生活与期待，整理择偶优先级，给下一次相亲一个更清晰的开始。</p>
-    <div class="intro-meta">
-      <span>⏱️ 约 8 分钟</span>
-      <span>📝 25 个问题</span>
-      <span>💾 可保存报告</span>
-    </div>
-  </div>
-
-  <div class="feature-grid">
-    <div class="feature-card">
-      <div class="icon">🌸</div>
-      <h3>你的相亲画像</h3>
-      <p>从真实回答出发，找到值得表达的特点和需要沟通的事情。</p>
-    </div>
-    <div class="feature-card">
-      <div class="icon">🎯</div>
-      <h3>择偶优先级</h3>
-      <p>区分必须满足、比较看重、可以商量的条件。</p>
-    </div>
-    <div class="feature-card">
-      <div class="icon">🚀</div>
-      <h3>下一步行动</h3>
-      <p>带走自我介绍草稿、见面沟通清单和两周行动计划。</p>
-    </div>
-  </div>
-
-  <div class="intro-note">
-    <h4>💡 关于这份工具</h4>
-    <p>报告按你的选项整理事实、偏好和沟通提示，不计算人的价值分数、人群排名或脱单概率。它是一份自我梳理材料，不能代替真实相处，也不是心理测评。所有回答仅在当前页面内处理，不上传、不自动保存。</p>
-  </div>
-
-  <div class="history-card" id="historyCard" style="display:none" onclick="showHistory()">
-    <div class="history-left">
-      <div class="history-icon">📋</div>
-      <div class="history-info">
-        <div class="h-title">查看历史记录</div>
-        <div class="h-desc" id="historyCount">你有 0 次梳理记录</div>
+  <section class="hero">
+    <div class="hero-text" style="opacity: 1; transform: translateY(0px); transition: 1s cubic-bezier(0.4, 0, 0.2, 1);">
+      <div class="hero-eyebrow">相亲市场定位测试</div>
+      <h1 class="hero-title">
+        你在相亲市场
+        <span class="line-break">是什么<span class="underline big">段位</span>？</span>
+      </h1>
+      <p class="hero-subtitle">
+        基于 9 大维度全面分析，生成你的专属相亲市场定位报告，找到最匹配的 TA 类型。
+      </p>
+      <div class="hero-tags">
+        <span class="hero-tag">📊 9大维度</span>
+        <span class="hero-tag">📝 52道精题</span>
+        <span class="hero-tag">🎯 双画像匹配</span>
+        <span class="hero-tag">🔍 优劣势分析</span>
       </div>
-    </div>
-    <div class="history-arrow">→</div>
-  </div>
-
-  <div id="resumeCard" style="display:none">
-    <div class="history-card" onclick="resumeQuiz()">
-      <div class="history-left">
-        <div class="history-icon">📝</div>
-        <div class="history-info">
-          <div class="h-title">继续上次梳理</div>
-          <div class="h-desc" id="resumeProgress">已完成 0 / 16 题</div>
+      <div class="hero-meta">
+        <div class="meta-item">
+          <div class="meta-icon">⏱</div>
+          <div class="meta-label">
+            <strong>约 12 分钟</strong>
+            <span>52 道精题</span>
+          </div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-icon">🎯</div>
+          <div class="meta-label">
+            <strong>9 大维度</strong>
+            <span>深度评估</span>
+          </div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-icon">🔒</div>
+          <div class="meta-label">
+            <strong>本地计算</strong>
+            <span>不上传数据</span>
+          </div>
         </div>
       </div>
-      <div class="history-arrow">→</div>
+      <button class="cta-primary" onclick="startQuiz()">
+        <span>开始测试</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"></path>
+        </svg>
+      </button>
     </div>
-  </div>
 
-  <div style="text-align:center;margin-top:8px">
-    <button class="btn btn-primary btn-large" onclick="startQuiz()">开始梳理 →</button>
-    <br>
-    <button class="skip-btn" onclick="loadSample()">先看一份虚构样例</button>
-  </div>
-</section>
+    <div class="hero-visual" style="opacity: 1; transform: translateY(0px); transition: 1s cubic-bezier(0.4, 0, 0.2, 1);">
+      <div class="deco-float deco-1">💕</div>
+      <div class="deco-float deco-2">✨</div>
+      <div class="deco-float deco-3">💐</div>
+      <div class="deco-float deco-4">💝</div>
+
+      <div class="report-card report-main" style="transform: translateY(57px) rotate(2deg);">
+        <div class="report-header">
+          <span class="report-badge">你的相亲市场定位</span>
+          <div class="report-score">
+            <span class="report-score-num">85</span>
+            <span class="report-score-unit">分</span>
+          </div>
+          <div class="report-rank">优质选手 · 条件不错</div>
+        </div>
+        <div class="report-body">
+          <svg class="radar-mini" viewBox="0 0 200 180">
+            <polygon points="100,20 170,55 170,125 100,160 30,125 30,55" fill="none" stroke="#F0E5E8" stroke-width="1"></polygon>
+            <polygon points="100,50 145,70 145,110 100,130 55,110 55,70" fill="none" stroke="#F0E5E8" stroke-width="1"></polygon>
+            <polygon points="100,80 120,90 120,100 100,110 80,100 80,90" fill="none" stroke="#F0E5E8" stroke-width="1"></polygon>
+            <polygon points="100,28 160,50 165,115 105,150 40,118 45,55" fill="rgba(212, 86, 115, 0.15)" stroke="#D45673" stroke-width="2"></polygon>
+            <circle cx="100" cy="28" r="4" fill="#D45673"></circle>
+            <circle cx="160" cy="50" r="4" fill="#D45673"></circle>
+            <circle cx="165" cy="115" r="4" fill="#D45673"></circle>
+            <circle cx="105" cy="150" r="4" fill="#D45673"></circle>
+            <circle cx="40" cy="118" r="4" fill="#D45673"></circle>
+            <circle cx="45" cy="55" r="4" fill="#D45673"></circle>
+          </svg>
+          <div class="report-tags-row">
+            <span class="report-tag good">学历优秀</span>
+            <span class="report-tag good">经济稳定</span>
+            <span class="report-tag">性格加分</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-card report-sub" style="transform: translateY(114px) rotate(-3deg);">
+        <div class="sub-card-body">
+          <div class="sub-card-title">最匹配TA类型</div>
+          <ul class="sub-list">
+            <li>成熟稳重型</li>
+            <li>成长型伴侣</li>
+            <li>三观一致优先</li>
+            <li>经济条件相当</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="scroll-hint">SCROLL</div>
+
+  <!-- 9大维度 -->
+  <section class="dimensions">
+    <div class="section-header">
+      <h2 class="section-title-small">9 个维度，测测你的相亲市场定位</h2>
+    </div>
+    <div class="dim-list">
+      <div class="dim-item"><span>🎂</span>年龄优势</div>
+      <div class="dim-item"><span>🏙️</span>城市定居</div>
+      <div class="dim-item"><span>🎓</span>学历背景</div>
+      <div class="dim-item"><span>💰</span>经济能力</div>
+      <div class="dim-item"><span>✨</span>外貌形象</div>
+      <div class="dim-item"><span>🏠</span>家庭条件</div>
+      <div class="dim-item"><span>😊</span>性格特质</div>
+      <div class="dim-item"><span>💞</span>情感经历</div>
+      <div class="dim-item"><span>💼</span>职业发展</div>
+    </div>
+  </section>
+
+  <!-- 双画像 -->
+  <section class="portraits">
+    <div class="portraits-inner">
+      <div class="section-header">
+        <h2 class="section-title-small">测完生成两份匹配画像</h2>
+      </div>
+      <div class="portraits-grid-small">
+        <div class="portrait-card-mini high">
+          <span class="portrait-label-mini">🎯 高匹配型</span>
+          <p>条件高度契合，重点把握的人群</p>
+        </div>
+        <div class="portrait-card-mini wide">
+          <span class="portrait-label-mini">🌟 可拓展型</span>
+          <p>条件浮动但值得了解的潜力人群</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © 相亲市场定位测试 · 仅供娱乐参考
+  </footer>
+</div>
 
 <!-- 答题页 -->
-<section class="quiz-screen" id="quizScreen">
-  <div class="quiz-header">
-    <div class="progress-top">
-      <span class="progress-section" id="sectionLabel">个人基本情况</span>
-      <span class="progress-count" id="progressText">1 / 16</span>
-    </div>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill" id="progressBar"></div>
-    </div>
-  </div>
-
-  <div class="single-question-wrap">
-    <div class="question-card-single" id="questionCard">
-      <div class="q-header">
-        <div class="q-number-big" id="qNumber">1</div>
-        <div class="q-meta">
-          <div class="q-progress-text"><strong id="qProgressNum">第 1 题</strong> · 共 16 题</div>
+<div class="page hidden" id="quizPage">
+  <div class="quiz-page">
+    <aside class="quiz-sidebar" id="sidebar">
+      <div class="sidebar-brand">相亲定位测试</div>
+      
+      <div class="sidebar-progress">
+        <div class="progress-label">
+          <span>答题进度</span>
+          <span id="progressText">0 / 52</span>
         </div>
-        <div class="q-total-hint" id="qAnsweredHint">已答 0 题</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
       </div>
-      <div class="question-title" id="qTitle">题目标题</div>
-      <div class="question-hint" id="qHint" style="display:none">题目提示</div>
-      <div id="qContent"></div>
-    </div>
-  </div>
 
-  <div class="quiz-actions">
-    <button class="btn btn-ghost" id="prevBtn" onclick="prevQuestion()" style="visibility:hidden">← 上一题</button>
-    <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
-  </div>
-  <button class="skip-btn" id="skipBtn" onclick="skipQuestion()">暂不填写，继续</button>
-</section>
+      <div class="question-nav">
+        <div class="nav-title">九大维度</div>
+        <ul class="nav-list" id="navList"></ul>
+      </div>
 
-<!-- 导航面板 -->
-<button class="nav-toggle" onclick="toggleNavPanel()" title="题目导航">☰</button>
-<div class="nav-panel" id="navPanel">
-  <div class="nav-panel-header">
-    <div class="nav-panel-title">📋 题目导航</div>
-    <button class="nav-close" onclick="toggleNavPanel()">✕</button>
-  </div>
-  <div class="nav-grid" id="navGrid"></div>
-  <div class="nav-legend">
-    <span><span class="dot current"></span>当前</span>
-    <span><span class="dot answered"></span>已答</span>
-    <span><span class="dot unanswered"></span>未答</span>
+      <div class="sidebar-footer">
+        <button class="back-home" onclick="goHome()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"></path>
+          </svg>
+          返回首页
+        </button>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <main class="quiz-main">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="打开导航">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        目录
+      </button>
+      <div class="question-container fade-in" id="questionContainer"></div>
+
+      <div class="quiz-nav">
+        <button class="nav-btn nav-btn-prev" id="prevBtn" onclick="prevQuestion()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"></path>
+          </svg>
+          上一题
+        </button>
+        <button class="nav-btn nav-btn-next" id="nextBtn" onclick="nextQuestion()" disabled="">
+          下一题
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+    </main>
   </div>
 </div>
 
 <!-- 结果页 -->
-<section class="result-screen" id="resultScreen">
-  <div class="result-header">
-    <div class="result-eyebrow">给下一次相亲的一份准备</div>
-    <h1>你的相亲画像</h1>
-    <p id="reportSummary">基于你的回答整理</p>
-  </div>
+<div class="page hidden" id="resultPage">
+  <div class="result-page">
+    <div class="result-container">
+      
+      <!-- 头部 -->
+      <div class="result-header fade-in">
+        <div class="result-rank-label">💎 你的相亲市场定位</div>
+        <h1 class="result-rank-title">你是 <em id="rankTitle">优质潜力股</em></h1>
+        <p class="result-rank-desc" id="rankDesc">
+          你在相亲市场上属于很受欢迎的类型，条件均衡且有突出亮点。
+          只要找准定位，遇到合适的人的概率很高。
+        </p>
+        
+        <div class="score-ring-wrap">
+          <div class="score-ring">
+            <svg viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#F4A7B6"></stop>
+                  <stop offset="100%" style="stop-color:#B03A56"></stop>
+                </linearGradient>
+              </defs>
+              <circle class="score-ring-bg" cx="100" cy="100" r="90"></circle>
+              <circle class="score-ring-fill" id="scoreRing" cx="100" cy="100" r="90"></circle>
+            </svg>
+            <div class="score-ring-text">
+              <div class="score-num" id="scoreNum">0</div>
+              <div class="score-unit">综合得分</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <div class="result-summary" id="resultSummary"></div>
+      <!-- 雷达图 -->
+      <div class="result-card fade-in">
+        <h3 class="result-card-title">📊 九维雷达分析</h3>
+        <p class="result-card-sub">各维度得分一目了然，看清优势与短板</p>
+        
+        <svg class="radar-chart" id="radarChart" viewBox="0 0 400 380">
+          <!-- 由JS动态生成 -->
+        </svg>
 
-  <nav class="report-nav" aria-label="报告章节">
-    <a href="#details">回答解读</a>
-    <a href="#preferences">择偶优先级</a>
-    <a href="#introSection">自我介绍</a>
-    <a href="#topics">见面话题</a>
-    <a href="#actions">行动清单</a>
-  </nav>
+        <div class="dim-scores" id="dimScores"></div>
+      </div>
 
-  <section id="details" class="report-section">
-    <h2>💡 从你的回答出发</h2>
-    <p class="section-note">每项提示都列出回答依据。未填写的部分不会推断。</p>
-    <div class="insight-list" id="insightList"></div>
-  </section>
+      <!-- 优势短板 -->
+      <div class="result-card fade-in">
+        <h3 class="result-card-title">💡 优势与短板</h3>
+        <p class="result-card-sub">发扬优势，补足短板，提升综合竞争力</p>
+        
+        <div class="swot-grid">
+          <div class="swot-box strength">
+            <div class="swot-title">🌟 你的优势</div>
+            <ul class="swot-list" id="strengthList">
+              <li>学历层次较高</li>
+              <li>经济收入稳定</li>
+              <li>性格特质加分</li>
+            </ul>
+          </div>
+          <div class="swot-box weakness">
+            <div class="swot-title">📈 可以提升</div>
+            <ul class="swot-list" id="weaknessList">
+              <li>年龄窗口需把握</li>
+              <li>家庭背景一般</li>
+              <li>社交圈子有限</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
-  <section id="preferences" class="report-section">
-    <h2>🎯 择偶条件探索</h2>
-    <p class="section-note">范围和优先级由你决定。留空或选择"暂不确定"即可跳过；调整条件不会生成现实人群概率。</p>
-    <div id="preferenceList"></div>
-    <div style="text-align:center;margin-top:18px">
-      <button class="btn btn-primary btn-small" onclick="updatePriorityChart()">查看优先级分布</button>
+      <!-- 双画像匹配 -->
+      <div class="result-card fade-in">
+        <h3 class="result-card-title">💘 双画像匹配</h3>
+        <p class="result-card-sub">找到最适合你的 TA 类型</p>
+        
+        <div class="match-grid">
+          <div class="match-card high-match">
+            <span class="match-label">🎯 高匹配型</span>
+            <h4 class="match-title">重点匹配范围</h4>
+            <p class="match-sub">条件高度契合的目标人群</p>
+            <ul class="match-items" id="highMatchList">
+              <li><strong>年龄区间</strong>比你小 2-4 岁</li>
+              <li><strong>月收入参考</strong>1.3万-2.5万/月</li>
+              <li><strong>学历要求</strong>本科及以上</li>
+              <li><strong>职业方向</strong>稳定体面职业优先</li>
+              <li><strong>城市</strong>同城，本地优先</li>
+              <li><strong>外貌形象</strong>颜值在线，形象精致</li>
+              <li><strong>家庭背景</strong>正常家庭，无负担</li>
+              <li><strong>相处特质</strong>人品端正，相处自然</li>
+            </ul>
+          </div>
+
+          <div class="match-card wide-match">
+            <span class="match-label">🌟 可拓展型</span>
+            <h4 class="match-title">扩大机会范围</h4>
+            <p class="match-sub">值得了解的潜力人群</p>
+            <ul class="match-items" id="wideMatchList">
+              <li><strong>年龄区间</strong>比你小 5 岁到大 3 岁</li>
+              <li><strong>月收入参考</strong>8千-2万/月</li>
+              <li><strong>学历要求</strong>大专及以上，专业不限</li>
+              <li><strong>职业方向</strong>收入稳定即可</li>
+              <li><strong>城市</strong>同城或有明确来的计划</li>
+              <li><strong>外貌形象</strong>整洁健康，相处舒服</li>
+              <li><strong>家庭背景</strong>无重大债务即可</li>
+              <li><strong>相处特质</strong>尊重边界，无暴力欺骗</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="result-actions">
+        <button class="result-btn result-btn-secondary" onclick="goHome()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+          返回首页
+        </button>
+        <button class="result-btn result-btn-primary" onclick="retakeQuiz()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+          </svg>
+          重新测试
+        </button>
+      </div>
     </div>
-  </section>
-
-  <div class="chart-section" id="priorityChartSection" style="display:none">
-    <h3>📊 你的择偶优先级分布</h3>
-    <p class="chart-desc">按"必须满足 / 比较看重 / 可以商量"分类</p>
-    <div class="chart-container">
-      <canvas id="priorityChart"></canvas>
-    </div>
   </div>
-
-  <section id="introSection" class="report-section">
-    <h2>✨ 你的自我介绍草稿</h2>
-    <p class="section-note">只使用你填写的内容。可以直接修改，加入真实的工作、兴趣或生活片段。</p>
-    <textarea class="intro-textarea" id="introDraft" rows="8" maxlength="3000"></textarea>
-    <div style="text-align:right;margin-top:8px">
-      <button class="btn btn-ghost btn-small" onclick="copyIntro()">📋 复制文字</button>
-    </div>
-  </section>
-
-  <section id="topics" class="report-section">
-    <h2>💬 第一次见面，可以聊什么</h2>
-    <p class="section-note">根据你的兴趣和沟通风格生成的话题参考</p>
-    <div class="topic-list" id="topicList"></div>
-  </section>
-
-  <section id="actions" class="report-section">
-    <h2>📅 接下来两周的行动清单</h2>
-    <p class="section-note">按自己的节奏选择。勾选状态会包含在下载的报告中。</p>
-    <div class="action-list" id="actionList"></div>
-  </section>
-
-  <section class="report-section">
-    <h2>📤 把这份准备带走</h2>
-    <div class="export-actions">
-      <button class="btn btn-primary" onclick="downloadReport()">📄 下载文字报告</button>
-      <button class="btn btn-ghost" onclick="window.print()">🖨️ 打印 / PDF</button>
-      <button class="btn btn-ghost" onclick="generateShareCard()">📸 分享卡片</button>
-      <button class="btn btn-ghost" onclick="backToEdit()">✏️ 返回修改</button>
-    </div>
-    <p style="font-size:.8rem;color:var(--text-light);text-align:center;margin-top:8px">
-      下载文件包含你选择填写的内容，请自行保管。
-    </p>
-  </section>
-</section>
-
-<!-- 历史记录页 -->
-<section class="history-screen" id="historyScreen">
-  <div style="display:flex;align-items:center;margin-bottom:20px">
-    <button class="btn btn-ghost btn-small" onclick="backToIntro()">← 返回</button>
-    <h2 style="flex:1;text-align:center;margin-right:70px">📋 历史记录</h2>
-  </div>
-  <div id="historyList"></div>
-  <div class="history-empty" id="historyEmpty">
-    <div class="emoji">💌</div>
-    <p>还没有梳理记录</p>
-    <p style="font-size:.85rem;margin-top:6px">完成一次梳理后，结果会自动保存在这里</p>
-  </div>
-</section>
-
 </div>
-
-<!-- 分享卡片弹窗 -->
-<div class="share-modal" id="shareModal" onclick="closeShareCard(event)">
-  <div class="share-card-wrap" onclick="event.stopPropagation()">
-    <div id="shareCard"></div>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeShareCard()">关闭</button>
-      <button class="btn btn-primary" style="flex:1" onclick="downloadShareCard()">下载图片</button>
-    </div>
-  </div>
-</div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
 
 <script>
-// ============ 数据 ============
-const questions = [
-  {id:'age',section:'个人基本情况',title:'你今年多大？',hint:'用于介绍生活阶段，不参与评分。',type:'number',min:18,max:100,unit:'岁'},
-  {id:'height',section:'个人基本情况',title:'你的身高是多少？',hint:'可以填大概的数字，不需要精确到厘米。',type:'number',min:140,max:210,unit:'cm'},
-  {id:'city',section:'个人基本情况',title:'你目前常住在哪座城市？',hint:'只需填写城市，不要填写具体地址。',type:'text',max:40,placeholder:'例如：杭州，也可以跳过'},
-  {id:'education',section:'个人基本情况',title:'你的最高学历是？',options:['高中及以下','大专','本科','硕士','博士','不想填写']},
-  {id:'work',section:'个人基本情况',title:'你的工作与生活节奏更接近哪一种？',options:['时间相对规律','经常加班或出差','轮班或时间不固定','学习或职业调整阶段']},
-  {id:'hobbies',section:'个人基本情况',title:'你愿意分享哪些日常兴趣？',hint:'最多选 3 项；没有贴近的可以跳过。',type:'multi',max:3,options:['散步或户外','运动健身','阅读或看电影','做饭与美食','旅行探索','游戏或手作','音乐或艺术']},
-  {id:'chat',section:'相处与表达',title:'认识新朋友时，你通常怎样开启聊天？',options:['比较容易主动分享','先倾听，熟悉后再分享','经常不知道怎么接话','看场合，还不确定']},
-  {id:'conflict',section:'相处与表达',title:'出现分歧时，你更常怎么处理？',options:['说明感受，一起讨论','先冷静，再约时间沟通','容易着急，事后再解释','倾向回避，不太会开口']},
-  {id:'express',section:'相处与表达',title:'你更习惯怎样表达关心？',hint:'不同的人表达方式不一样，没有对错。',options:['直接说出来','用行动照顾对方','默默记在心里','不太会表达，还在学习']},
-  {id:'strength',section:'相处与表达',title:'你最想让对方了解自己的哪些特点？',hint:'最多选 3 项。这是自我描述，可以用真实经历来说明。',type:'multi',max:3,options:['愿意倾听','做事可靠','喜欢分享生活','尊重独立空间','愿意一起规划','愿意照顾彼此']},
-  {id:'lifestyle',section:'相处与表达',title:'你期待怎样的相处频率？',options:['日常多联系，见面频繁','有固定见面时间，也有个人空间','时间灵活，提前协商','还想通过相处慢慢了解']},
-  {id:'sleep',section:'生活方式',title:'你的作息习惯更接近哪一种？',hint:'作息不同也可以相处，提前知道更好安排。',options:['早睡早起型','正常作息（11-12点睡）','晚睡晚起型','经常熬夜，不固定']},
-  {id:'diet',section:'生活方式',title:'你的饮食偏好是？',options:['不忌口，什么都吃','偏清淡健康','喜欢美食探店','有忌口（过敏/素食等）']},
-  {id:'exercise',section:'生活方式',title:'你平时的运动习惯是？',options:['经常运动，有固定项目','偶尔运动，看心情','很少运动','工作已经够累了']},
-  {id:'pet',section:'生活方式',title:'你对宠物的态度是？',hint:'有过敏、害怕或特殊经历也可以在这里说明。',options:['有宠物，很喜欢','喜欢但暂时没养','不反感，可以相处','不喜欢/过敏，最好不要']},
-  {id:'care',section:'家庭与未来',title:'目前是否有需要沟通的家庭照护安排？',hint:'只梳理安排，不评价家庭好坏；无需填写健康细节。',options:['暂无固定照护安排','有定期照护安排，时间可协调','有长期照护安排，需要提前沟通','尚不确定']},
-  {id:'housing',section:'家庭与未来',title:'对未来居住方式，你更倾向于？',options:['与伴侣独立居住','与家人同住或就近照顾','根据双方工作和情况协商','暂未考虑']},
-  {id:'finance',section:'家庭与未来',title:'对于共同生活的开支，你希望怎样安排？',hint:'不需要填写收入或资产数额。',options:['各自独立，共同开支协商','共同预算，定期沟通','按收入和承担的责任协商','还没有想清楚']},
-  {id:'marriage',section:'家庭与未来',title:'你对婚姻的看法更接近哪一种？',options:['人生重要的一部分','顺其自然，遇到合适的人再说','不是必需，但可以考虑','更倾向不婚']},
-  {id:'roles',section:'家庭与未来',title:'对家庭中的角色分工，你的想法是？',hint:'没有标准答案，关键是双方能协商一致。',options:['传统分工（男主外女主内）','传统分工（女主外男主内）','共同分担，灵活协商','还没想清楚']},
-  {id:'timeline',section:'关系期待',title:'你目前对关系进度的想法是？',options:['希望 1—2 年内考虑结婚','先认真相处，再讨论结婚','希望慢慢了解，不设时间表','还在探索是否适合进入关系']},
-  {id:'children',section:'关系期待',title:'关于生育，你目前的想法是？',hint:'这是需要双方平等沟通的议题，可以跳过。',options:['希望未来有孩子','倾向不生育','还不确定，需要进一步考虑']},
-  {id:'location',section:'关系期待',title:'你对未来定居地点的想法是？',options:['希望留在目前城市','可考虑异地，之后协商定居','愿意根据双方规划调整','暂未确定']},
-  {id:'values',section:'关系期待',title:'长期相处中，你最看重什么？',hint:'最多选 3 项；这些是你想重点了解的方向。',type:'multi',max:3,options:['彼此尊重','沟通坦诚','生活节奏接近','消费观能协商','共同成长','家庭边界清晰','愿意承担责任']},
-  {id:'focus',section:'下一步行动',title:'这次你最想解决哪个问题？',options:['理清自己的择偶条件','改善自我介绍','让见面聊天更自然','复盘相亲后的感受']}
-];
+  // 52 道精题 · 9 大维度
+  const questions = [
+    // ===== 年龄优势 (6题) =====
+    { dim: '年龄优势', icon: '🎂', text: '你今年多大？', hint: '不同年龄段在相亲市场中有不同的窗口期和优势。', type: 'choice',
+      options: [
+        { text: '22岁以下', score: 75 },
+        { text: '23-26岁', score: 95 },
+        { text: '27-29岁', score: 88 },
+        { text: '30-32岁', score: 75 },
+        { text: '33-35岁', score: 62 },
+        { text: '36岁以上', score: 50 }
+      ]},
+    { dim: '年龄优势', icon: '🎂', text: '你看起来比实际年龄？', hint: '视觉年龄也是相亲市场中的重要因素。', type: 'choice',
+      options: [
+        { text: '看起来年轻很多（小5岁以上）', score: 92 },
+        { text: '看起来年轻一点（小2-3岁）', score: 82 },
+        { text: '跟实际年龄差不多', score: 70 },
+        { text: '看起来稍微成熟一点', score: 60 },
+        { text: '看起来比实际年龄大不少', score: 48 }
+      ]},
+    { dim: '年龄优势', icon: '🎂', text: '你打算什么时候结婚？', hint: '结婚节奏跟年龄窗口是否匹配。', type: 'choice',
+      options: [
+        { text: '1年内，比较着急', score: 68 },
+        { text: '1-2年内', score: 85 },
+        { text: '2-3年内', score: 90 },
+        { text: '3年以后再说', score: 78 },
+        { text: '还没想好，看缘分', score: 62 }
+      ]},
+    { dim: '年龄优势', icon: '🎂', text: '你的身体状态怎么样？', hint: '健康是一切的基础，也是相亲中的隐性加分项。', type: 'choice',
+      options: [
+        { text: '非常好，经常运动健身', score: 92 },
+        { text: '还不错，偶尔运动', score: 80 },
+        { text: '一般，没什么大毛病', score: 68 },
+        { text: '有些亚健康，需要调理', score: 55 },
+        { text: '身体不太好，有慢性病', score: 42 }
+      ]},
+    { dim: '年龄优势', icon: '🎂', text: '你的生活作息规律吗？', hint: '作息规律反映了自律程度和生活状态。', type: 'choice',
+      options: [
+        { text: '非常规律，早睡早起', score: 88 },
+        { text: '比较规律，偶尔熬夜', score: 76 },
+        { text: '不太规律，经常熬夜', score: 60 },
+        { text: '很不规律，昼夜颠倒', score: 45 }
+      ]},
+    { dim: '年龄优势', icon: '🎂', text: '你对生孩子的规划是？', hint: '生育规划影响婚姻节奏和年龄焦虑。', type: 'choice',
+      options: [
+        { text: '结婚后就要', score: 68 },
+        { text: '结婚后1-2年要', score: 82 },
+        { text: '顺其自然，不刻意', score: 88 },
+        { text: '想丁克或暂时不考虑', score: 60 },
+        { text: '还没想过这个问题', score: 55 }
+      ]},
 
-const preferenceFields = [
-  {id:'age',label:'年龄范围',type:'range',min:18,max:100,unit:'岁'},
-  {id:'height',label:'身高范围',type:'range',min:140,max:210,unit:'cm'},
-  {id:'education',label:'学历偏好',options:['暂不确定','不限学历','大专及以上','本科及以上','硕士及以上']},
-  {id:'income',label:'收入期待',options:['暂不确定','不设固定数额，重点沟通开支','8千元及以上','1.5万元及以上','2.5万元及以上']},
-  {id:'city',label:'定居安排',options:['暂不确定','希望同城发展','可以异地并协商定居','可共同选择城市']},
-  {id:'children',label:'生育意愿',options:['暂不确定','希望未来有孩子','倾向不生育','可以继续讨论']},
-  {id:'housing',label:'居住安排',options:['暂不确定','希望独立居住','可以与家人同住','根据照护和工作安排协商']},
-  {id:'finance',label:'共同开支',options:['暂不确定','各自独立，共同开支协商','共同预算，定期沟通','按收入和责任协商']},
-  {id:'contact',label:'相处频率',options:['暂不确定','希望经常联系和见面','固定见面，也保留个人空间','按双方时间提前协商']},
-  {id:'character',label:'性格特质',options:['暂不确定','温柔体贴','成熟稳重','活泼开朗','独立自主']}
-];
+    // ===== 城市定居 (6题) =====
+    { dim: '城市定居', icon: '🏙️', text: '你目前在哪个城市生活？', hint: '城市级别决定了相亲资源的丰富程度。', type: 'choice',
+      options: [
+        { text: '一线城市（北上广深）', score: 95 },
+        { text: '新一线城市', score: 85 },
+        { text: '二线城市', score: 75 },
+        { text: '三线城市', score: 62 },
+        { text: '四线及以下/县城', score: 50 }
+      ]},
+    { dim: '城市定居', icon: '🏙️', text: '你有当地户口吗？', hint: '户籍在相亲市场中是稳定因素。', type: 'choice',
+      options: [
+        { text: '有本地户口，本地人', score: 95 },
+        { text: '有本地户口，外地人落户', score: 88 },
+        { text: '正在办理/有明确计划', score: 72 },
+        { text: '没有，但在争取', score: 58 },
+        { text: '没有，也没打算落户', score: 42 }
+      ]},
+    { dim: '城市定居', icon: '🏙️', text: '你打算在当前城市长期定居吗？', hint: '定居计划关系到关系的稳定性。', type: 'choice',
+      options: [
+        { text: '肯定定居，已经扎根了', score: 95 },
+        { text: '大概率定居，比较稳定', score: 82 },
+        { text: '还在观望，看发展', score: 62 },
+        { text: '可能会换城市', score: 45 },
+        { text: '肯定要离开的', score: 30 }
+      ]},
+    { dim: '城市定居', icon: '🏙️', text: '你在当地的社交圈怎么样？', hint: '社交圈大小影响认识异性的机会。', type: 'choice',
+      options: [
+        { text: '朋友很多，圈子很广', score: 90 },
+        { text: '有一些朋友，圈子还可以', score: 76 },
+        { text: '朋友不多，圈子比较小', score: 60 },
+        { text: '几乎没什么朋友，很孤独', score: 42 }
+      ]},
+    { dim: '城市定居', icon: '🏙️', text: '你在当地有自己的房子吗？', hint: '房产是定居能力的硬指标。', type: 'choice',
+      options: [
+        { text: '有房无贷，全款或快还清', score: 95 },
+        { text: '有房有贷，压力不大', score: 85 },
+        { text: '有房有贷，压力较大', score: 70 },
+        { text: '暂无，有明确购房计划', score: 58 },
+        { text: '暂无，暂时没计划', score: 42 }
+      ]},
+    { dim: '城市定居', icon: '🏙️', text: '你家人是否也在这个城市？', hint: '家人在本地是相亲市场的加分项。', type: 'choice',
+      options: [
+        { text: '本地人，全家都在', score: 92 },
+        { text: '家人在同城或周边', score: 80 },
+        { text: '家人在老家，但常联系', score: 65 },
+        { text: '家人在外地，关系一般', score: 52 },
+        { text: '家庭情况比较复杂', score: 40 }
+      ]},
 
-const PRIORITY_LEVELS = [
-  {key:'unsorted',label:'暂未分类',color:'var(--text-light)'},
-  {key:'must',label:'必须满足',color:'var(--rose)'},
-  {key:'important',label:'比较看重',color:'var(--coral)'},
-  {key:'negotiable',label:'可以商量',color:'var(--mint-deep)'}
-];
+    // ===== 学历背景 (6题) =====
+    { dim: '学历背景', icon: '🎓', text: '你的最高学历是？', hint: '学历是相亲市场中的重要硬指标。', type: 'choice',
+      options: [
+        { text: '初中及以下', score: 40 },
+        { text: '高中/中专/职高', score: 52 },
+        { text: '大专', score: 62 },
+        { text: '全日制本科', score: 78 },
+        { text: '非全日制本科', score: 68 },
+        { text: '硕士研究生', score: 88 },
+        { text: '博士研究生', score: 82 }
+      ]},
+    { dim: '学历背景', icon: '🎓', text: '你毕业的学校属于什么层次？', hint: '学校层次在相亲市场中有一定溢价。', type: 'choice',
+      options: [
+        { text: '985/顶尖211/海外名校', score: 92 },
+        { text: '211/重点大学', score: 82 },
+        { text: '普通本科', score: 70 },
+        { text: '大专/高职', score: 58 },
+        { text: '高中及以下', score: 45 }
+      ]},
+    { dim: '学历背景', icon: '🎓', text: '你的专业属于什么类型？', hint: '专业影响职业发展和收入预期。', type: 'choice',
+      options: [
+        { text: '热门高薪专业（计算机/金融等）', score: 88 },
+        { text: '稳定专业（教师/医生/法律等）', score: 82 },
+        { text: '普通理工科', score: 72 },
+        { text: '普通文科/商科', score: 65 },
+        { text: '艺术类/体育类', score: 58 },
+        { text: '冷门专业', score: 50 }
+      ]},
+    { dim: '学历背景', icon: '🎓', text: '你现在还在持续学习提升吗？', hint: '学习能力和上进心是重要软指标。', type: 'choice',
+      options: [
+        { text: '一直在学，考证/读书/进修', score: 88 },
+        { text: '偶尔学习，看需要', score: 75 },
+        { text: '工作之余学得不多', score: 62 },
+        { text: '基本不学习，吃老本', score: 48 }
+      ]},
+    { dim: '学历背景', icon: '🎓', text: '你的学历在你所在行业认可度如何？', hint: '学历与行业的匹配度影响竞争力。', type: 'choice',
+      options: [
+        { text: '远高于行业平均', score: 88 },
+        { text: '略高于行业平均', score: 78 },
+        { text: '跟行业平均差不多', score: 68 },
+        { text: '略低于行业平均', score: 55 },
+        { text: '远低于行业平均', score: 42 }
+      ]},
+    { dim: '学历背景', icon: '🎓', text: '你身边人的学历层次大概是？', hint: '身边人的层次侧面反映你的圈子质量。', type: 'choice',
+      options: [
+        { text: '普遍比我高，圈子很优质', score: 90 },
+        { text: '跟我差不多，层次相当', score: 75 },
+        { text: '参差不齐，什么样的都有', score: 62 },
+        { text: '普遍比我低一些', score: 50 }
+      ]},
 
-// ============ 状态 ============
-let answers = {};
-let currentQ = 0;
-let preferences = {};
-preferenceFields.forEach(f => {
-  preferences[f.id] = { value: f.options ? f.options[0] : {min:f.min,max:f.max}, priority: 'unsorted' };
-});
-let isSliding = false;
-let priorityChartInstance = null;
+    // ===== 经济能力 (6题) =====
+    { dim: '经济能力', icon: '💰', text: '你的月收入（税后）大概是？', hint: '收入水平是经济能力的直接体现。', type: 'choice',
+      options: [
+        { text: '5千以下', score: 42 },
+        { text: '5千-8千', score: 55 },
+        { text: '8千-1.2万', score: 70 },
+        { text: '1.2万-2万', score: 82 },
+        { text: '2万-3.5万', score: 90 },
+        { text: '3.5万-5万', score: 95 },
+        { text: '5万以上', score: 98 }
+      ]},
+    { dim: '经济能力', icon: '💰', text: '你的年收入（含奖金/副业）大概？', hint: '综合年收入更能反映经济实力。', type: 'choice',
+      options: [
+        { text: '8万以下', score: 42 },
+        { text: '8-15万', score: 58 },
+        { text: '15-25万', score: 72 },
+        { text: '25-40万', score: 85 },
+        { text: '40-70万', score: 92 },
+        { text: '70万以上', score: 98 }
+      ]},
+    { dim: '经济能力', icon: '💰', text: '你目前的存款/投资资产大概有多少？', hint: '储蓄和资产是经济底气的重要部分。', type: 'choice',
+      options: [
+        { text: '基本没存款，月光', score: 40 },
+        { text: '5万以内', score: 52 },
+        { text: '5-20万', score: 65 },
+        { text: '20-50万', score: 78 },
+        { text: '50-100万', score: 88 },
+        { text: '100万以上', score: 95 }
+      ]},
+    { dim: '经济能力', icon: '💰', text: '你目前有多少负债？', hint: '负债情况影响经济健康度。', type: 'choice',
+      options: [
+        { text: '无负债，无房贷车贷', score: 92 },
+        { text: '只有房贷，压力不大', score: 80 },
+        { text: '有房贷+车贷，还行', score: 68 },
+        { text: '负债较高，压力大', score: 50 },
+        { text: '有很多消费贷/信用卡债', score: 32 }
+      ]},
+    { dim: '经济能力', icon: '💰', text: '你对未来3年收入增长的预期？', hint: '收入增长预期影响长期经济信心。', type: 'choice',
+      options: [
+        { text: '会有大幅增长', score: 88 },
+        { text: '稳步增长，比较乐观', score: 78 },
+        { text: '跟现在差不多', score: 65 },
+        { text: '不太确定，看大环境', score: 52 },
+        { text: '可能会下降', score: 38 }
+      ]},
+    { dim: '经济能力', icon: '💰', text: '你的消费理财观念是？', hint: '理财观念反映了经济成熟度。', type: 'choice',
+      options: [
+        { text: '很会理财，有规划地投资储蓄', score: 90 },
+        { text: '适度消费，有储蓄习惯', score: 80 },
+        { text: '赚多少花多少，开心就好', score: 60 },
+        { text: '经常超前消费，月光负债', score: 38 }
+      ]},
 
-// ============ 主题切换 ============
-function toggleTheme(){
-  const html = document.documentElement;
-  const isDark = html.getAttribute("data-theme") === "dark";
-  html.setAttribute("data-theme", isDark ? "light" : "dark");
-  document.getElementById("themeBtn").textContent = isDark ? "🌙" : "☀️";
-  localStorage.setItem("matchmaking_theme", isDark ? "light" : "dark");
-  if(priorityChartInstance) renderPriorityChart();
-}
-(function(){
-  const saved = localStorage.getItem("matchmaking_theme");
-  if(saved === "dark"){
-    document.documentElement.setAttribute("data-theme","dark");
-    document.getElementById("themeBtn").textContent = "☀️";
-  }
-})();
+    // ===== 外貌形象 (6题) =====
+    { dim: '外貌形象', icon: '✨', text: '你觉得自己的颜值大概在什么水平？', hint: '颜值是相亲市场的第一眼印象。', type: 'choice',
+      options: [
+        { text: '很出众，公认的好看', score: 95 },
+        { text: '中上水平，经常被夸', score: 82 },
+        { text: '中等偏上，还可以', score: 70 },
+        { text: '普通路人水平', score: 58 },
+        { text: '比较普通，不太自信', score: 48 }
+      ]},
+    { dim: '外貌形象', icon: '✨', text: '你的身高/身材属于什么水平？', hint: '身高身材是相亲市场的重要考量。', type: 'choice',
+      options: [
+        { text: '身高身材都很出众', score: 92 },
+        { text: '身高不错，身材匀称', score: 80 },
+        { text: '中等水平，比较匀称', score: 70 },
+        { text: '身高一般，身材需要管理', score: 55 },
+        { text: '身高身材都不太理想', score: 42 }
+      ]},
+    { dim: '外貌形象', icon: '✨', text: '你平时注重穿搭打扮吗？', hint: '穿搭品味反映了生活品质和审美。', type: 'choice',
+      options: [
+        { text: '很注重，穿搭有自己的风格', score: 88 },
+        { text: '比较注重，会打扮自己', score: 78 },
+        { text: '一般，干净整洁就好', score: 65 },
+        { text: '不太注重，比较随意', score: 52 },
+        { text: '完全不在意打扮', score: 38 }
+      ]},
+    { dim: '外貌形象', icon: '✨', text: '你的气质给人的感觉是？', hint: '气质是比颜值更持久的吸引力。', type: 'choice',
+      options: [
+        { text: '气质很好，很有魅力', score: 92 },
+        { text: '气质不错，比较有特点', score: 80 },
+        { text: '一般般，没什么特别', score: 65 },
+        { text: '气质不太好，需要提升', score: 50 }
+      ]},
+    { dim: '外貌形象', icon: '✨', text: '异性对你外貌的评价通常是？', hint: '来自异性的评价更有参考价值。', type: 'choice',
+      options: [
+        { text: '很多人追/被搭讪', score: 95 },
+        { text: '经常被夸好看', score: 82 },
+        { text: '偶尔有人表示好感', score: 68 },
+        { text: '很少有人主动表示', score: 55 },
+        { text: '几乎没有过', score: 40 }
+      ]},
+    { dim: '外貌形象', icon: '✨', text: '你在皮肤/身材管理上的投入？', hint: '对外貌的投入反映了自我管理能力。', type: 'choice',
+      options: [
+        { text: '投入很多，护肤健身很自律', score: 88 },
+        { text: '有一定投入，比较注意', score: 75 },
+        { text: '偶尔会注意一下', score: 62 },
+        { text: '基本不怎么管理', score: 45 }
+      ]},
 
-// ============ 可拖动按钮 ============
-(function(){
-  const btn = document.getElementById("themeBtn");
-  if(!btn) return;
-  let isDragging = false, hasMoved = false;
-  let startX = 0, startY = 0, startLeft = 0, startTop = 0;
-  const savedPos = localStorage.getItem("matchmaking_themeBtnPos");
-  if(savedPos){ try{ const pos = JSON.parse(savedPos); btn.style.right="auto"; btn.style.left=pos.left+"px"; btn.style.top=pos.top+"px"; }catch(e){} }
-  function getPt(e){ return e.touches?.[0] ? {x:e.touches[0].clientX,y:e.touches[0].clientY} : {x:e.clientX,y:e.clientY}; }
-  function onStart(e){
-    if(e.type==="mousedown" && e.button!==0) return;
-    isDragging = true; hasMoved = false;
-    const p = getPt(e); startX=p.x; startY=p.y;
-    const r = btn.getBoundingClientRect(); startLeft=r.left; startTop=r.top;
-    btn.classList.add("dragging"); btn.style.right="auto";
-    e.preventDefault && e.preventDefault();
-  }
-  function onMove(e){
-    if(!isDragging) return;
-    const p = getPt(e); const dx=p.x-startX, dy=p.y-startY;
-    if(Math.abs(dx)>3||Math.abs(dy)>3) hasMoved = true;
-    let nl = startLeft+dx, nt = startTop+dy;
-    const w=btn.offsetWidth,h=btn.offsetHeight;
-    nl = Math.max(8,Math.min(window.innerWidth-w-8,nl));
-    nt = Math.max(8,Math.min(window.innerHeight-h-8,nt));
-    btn.style.left=nl+"px"; btn.style.top=nt+"px";
-    e.preventDefault && e.preventDefault();
-  }
-  function onEnd(){
-    if(!isDragging) return;
-    isDragging = false; btn.classList.remove("dragging");
-    if(hasMoved){
-      const r = btn.getBoundingClientRect();
-      localStorage.setItem("matchmaking_themeBtnPos", JSON.stringify({left:r.left,top:r.top}));
-    }
-  }
-  btn.addEventListener("mousedown", onStart);
-  document.addEventListener("mousemove", onMove);
-  document.addEventListener("mouseup", onEnd, true);
-  btn.addEventListener("touchstart", onStart, {passive:false});
-  document.addEventListener("touchmove", onMove, {passive:false});
-  document.addEventListener("touchend", onEnd, {passive:false});
-  btn.addEventListener("click", (e) => { if(hasMoved){ e.stopImmediatePropagation(); e.preventDefault(); hasMoved=false; } }, true);
-  window.addEventListener("resize", () => {
-    const r = btn.getBoundingClientRect(); const w=btn.offsetWidth,h=btn.offsetHeight;
-    let nl = r.left, nt = r.top;
-    nl = Math.max(8,Math.min(window.innerWidth-w-8,nl));
-    nt = Math.max(8,Math.min(window.innerHeight-h-8,nt));
-    btn.style.left=nl+"px"; btn.style.top=nt+"px";
-  });
-})();
+    // ===== 家庭条件 (6题) =====
+    { dim: '家庭条件', icon: '🏠', text: '你的家庭经济条件如何？', hint: '家庭背景是相亲市场中的重要参考。', type: 'choice',
+      options: [
+        { text: '家境优渥，资源丰富', score: 95 },
+        { text: '家境不错，中上水平', score: 85 },
+        { text: '普通工薪家庭', score: 70 },
+        { text: '家境一般，比较普通', score: 55 },
+        { text: '家庭经济条件较差', score: 42 }
+      ]},
+    { dim: '家庭条件', icon: '🏠', text: '你父母的职业/退休情况？', hint: '父母职业反映了家庭背景和稳定性。', type: 'choice',
+      options: [
+        { text: '体制内/企业高管，退休金丰厚', score: 90 },
+        { text: '稳定工作，有社保退休金', score: 78 },
+        { text: '普通工作/务农，有基本保障', score: 65 },
+        { text: '工作不稳定，保障有限', score: 52 },
+        { text: '家庭情况比较复杂', score: 38 }
+      ]},
+    { dim: '家庭条件', icon: '🏠', text: '你是独生子女吗？', hint: '是否独生子女影响家庭资源和赡养压力。', type: 'choice',
+      options: [
+        { text: '独生子女，家庭资源集中', score: 82 },
+        { text: '有兄弟姐妹，关系很好', score: 75 },
+        { text: '有兄弟姐妹，关系一般', score: 62 },
+        { text: '家庭结构比较复杂', score: 48 }
+      ]},
+    { dim: '家庭条件', icon: '🏠', text: '你需要承担的家庭赡养压力大吗？', hint: '赡养压力是相亲市场中的隐性减分项。', type: 'choice',
+      options: [
+        { text: '完全没有，父母自给自足还有结余', score: 92 },
+        { text: '压力很小，偶尔补贴就行', score: 80 },
+        { text: '有一些压力，但能承受', score: 65 },
+        { text: '压力比较大', score: 50 },
+        { text: '压力很大，是主要经济支柱', score: 32 }
+      ]},
+    { dim: '家庭条件', icon: '🏠', text: '家庭能为你结婚提供什么支持？', hint: '家庭支持力度影响结婚的经济基础。', type: 'choice',
+      options: [
+        { text: '大力支持（房/车/彩礼都能帮）', score: 95 },
+        { text: '能提供不少支持', score: 82 },
+        { text: '能支持一部分', score: 68 },
+        { text: '支持有限，主要靠自己', score: 52 },
+        { text: '基本没有支持', score: 38 }
+      ]},
+    { dim: '家庭条件', icon: '🏠', text: '你的家庭关系和谐程度？', hint: '原生家庭关系影响婚姻观和相处模式。', type: 'choice',
+      options: [
+        { text: '非常和谐，家庭氛围很好', score: 90 },
+        { text: '比较和谐，偶尔有小矛盾', score: 78 },
+        { text: '一般般，不好不坏', score: 65 },
+        { text: '关系不太好，经常有矛盾', score: 50 },
+        { text: '家庭关系很糟糕', score: 38 }
+      ]},
 
-// ============ 本地存储 ============
-const STORAGE_KEY = "matchmaking_answers";
-const PREF_KEY = "matchmaking_prefs";
-const HISTORY_KEY = "matchmaking_history";
+    // ===== 性格特质 (6题) =====
+    { dim: '性格特质', icon: '😊', text: '你的性格更偏向？', hint: '性格没有好坏，但影响相处模式。', type: 'choice',
+      options: [
+        { text: '外向活泼，很容易跟人熟', score: 82 },
+        { text: '偏外向，相处起来很轻松', score: 80 },
+        { text: '中间型，看场合看对象', score: 78 },
+        { text: '偏内向，熟了以后话多', score: 70 },
+        { text: '很内向，不太爱说话', score: 60 }
+      ]},
+    { dim: '性格特质', icon: '😊', text: '你的情绪稳定性如何？', hint: '情绪稳定是亲密关系中的重要品质。', type: 'choice',
+      options: [
+        { text: '非常稳定，很少情绪化', score: 92 },
+        { text: '比较稳定，偶尔有情绪', score: 80 },
+        { text: '一般，看什么事', score: 65 },
+        { text: '容易情绪化，波动较大', score: 50 },
+        { text: '很不稳定，经常失控', score: 35 }
+      ]},
+    { dim: '性格特质', icon: '😊', text: '你的沟通表达能力怎么样？', hint: '沟通能力决定了矛盾能否妥善解决。', type: 'choice',
+      options: [
+        { text: '很善于沟通，表达清晰', score: 90 },
+        { text: '还不错，能说清楚想法', score: 78 },
+        { text: '一般，有时候说不清楚', score: 62 },
+        { text: '不太会表达，容易憋着', score: 50 },
+        { text: '很不擅长沟通，容易冷战', score: 35 }
+      ]},
+    { dim: '性格特质', icon: '😊', text: '你的同理心和共情能力如何？', hint: '能站在对方角度思考的人更受欢迎。', type: 'choice',
+      options: [
+        { text: '很强，很能理解别人的感受', score: 92 },
+        { text: '比较好，能体谅对方', score: 80 },
+        { text: '一般，看情况', score: 65 },
+        { text: '不太擅长共情', score: 50 },
+        { text: '比较自我中心', score: 35 }
+      ]},
+    { dim: '性格特质', icon: '😊', text: '你的责任感和靠谱程度？', hint: '靠谱是亲密关系中的核心品质。', type: 'choice',
+      options: [
+        { text: '非常靠谱，说到做到', score: 92 },
+        { text: '比较靠谱，答应的事基本能做到', score: 80 },
+        { text: '一般，偶尔会放鸽子', score: 62 },
+        { text: '不太靠谱，经常拖延', score: 48 },
+        { text: '很不靠谱，说话不算数', score: 30 }
+      ]},
+    { dim: '性格特质', icon: '😊', text: '你的包容心和成熟度如何？', hint: '包容和成熟决定了关系能走多远。', type: 'choice',
+      options: [
+        { text: '很成熟包容，能理解差异', score: 92 },
+        { text: '比较成熟，一般都能包容', score: 80 },
+        { text: '一般，看是什么事情', score: 65 },
+        { text: '不太能包容，比较较真', score: 50 },
+        { text: '很幼稚，经常无理取闹', score: 32 }
+      ]},
 
-function saveProgress(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({answers, currentQ, timestamp: Date.now()}));
-  localStorage.setItem(PREF_KEY, JSON.stringify(preferences));
-}
-function loadProgress(){
-  try{
-    const a = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    const p = JSON.parse(localStorage.getItem(PREF_KEY) || "null");
-    if(p) Object.assign(preferences, p);
-    return a;
-  }catch(e){ return null; }
-}
-function clearProgress(){
-  localStorage.removeItem(STORAGE_KEY);
-}
-function saveToHistory(){
-  let history = [];
-  try{ history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }catch(e){}
-  const record = {
-    date: new Date().toISOString(),
-    answers: {...answers},
-    preferences: {...preferences},
-    brief: generateBrief()
-  };
-  history.unshift(record);
-  if(history.length > 10) history = history.slice(0,10);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-}
-function getHistory(){
-  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }catch(e){ return []; }
-}
-function generateBrief(){
-  const parts = [];
-  if(answers.age) parts.push(answers.age+"岁");
-  if(answers.city) parts.push(answers.city);
-  if(answers.work) parts.push(answers.work);
-  const answered = questions.filter(q => isAnswered(q.id)).length;
-  return `${answered}/${questions.length}题 · ${parts.slice(0,2).join(" · ")}`;
-}
+    // ===== 情感经历 (6题) =====
+    { dim: '情感经历', icon: '💞', text: '你有过几段认真的恋爱经历？', hint: '感情经历影响恋爱观和相处能力。', type: 'choice',
+      options: [
+        { text: '没有恋爱经历', score: 68 },
+        { text: '1段', score: 78 },
+        { text: '2-3段', score: 85 },
+        { text: '4-5段', score: 72 },
+        { text: '5段以上', score: 58 }
+      ]},
+    { dim: '情感经历', icon: '💞', text: '你最长的一段感情持续了多久？', hint: '感情时长反映了经营长期关系的能力。', type: 'choice',
+      options: [
+        { text: '没谈过/都很短', score: 55 },
+        { text: '半年到1年', score: 68 },
+        { text: '1-3年', score: 80 },
+        { text: '3-5年', score: 82 },
+        { text: '5年以上', score: 75 }
+      ]},
+    { dim: '情感经历', icon: '💞', text: '上一段感情结束的主要原因是？', hint: '分手原因能反映相处模式和问题。', type: 'choice',
+      options: [
+        { text: '没谈过恋爱', score: 68 },
+        { text: '和平分手，性格/目标不合', score: 82 },
+        { text: '现实因素（距离/家庭等）', score: 75 },
+        { text: '对方的问题（出轨/不负责任等）', score: 65 },
+        { text: '我的问题比较多', score: 52 },
+        { text: '原因比较复杂', score: 60 }
+      ]},
+    { dim: '情感经历', icon: '💞', text: '你对爱情/婚姻的态度是？', hint: '恋爱观成熟度影响关系质量。', type: 'choice',
+      options: [
+        { text: '很成熟，知道自己要什么', score: 88 },
+        { text: '比较成熟，有自己的想法', score: 78 },
+        { text: '一般，还在摸索', score: 65 },
+        { text: '比较天真，容易上头', score: 52 },
+        { text: '不太相信爱情/婚姻', score: 45 }
+      ]},
+    { dim: '情感经历', icon: '💞', text: '你在感情中更倾向于什么相处模式？', hint: '相处模式偏好影响匹配度。', type: 'choice',
+      options: [
+        { text: '独立又亲密，各自有空间', score: 88 },
+        { text: '比较黏人，喜欢经常在一起', score: 72 },
+        { text: '各自独立，不需要太多陪伴', score: 65 },
+        { text: '还不太清楚自己要什么', score: 52 }
+      ]},
+    { dim: '情感经历', icon: '💞', text: '你在感情中的需求清晰吗？', hint: '知道自己需要什么很重要。', type: 'choice',
+      options: [
+        { text: '非常清晰，知道自己要什么不要什么', score: 88 },
+        { text: '比较清晰，有大概的方向', score: 75 },
+        { text: '有一些想法，但不太确定', score: 62 },
+        { text: '不太清晰，经常迷茫', score: 48 },
+        { text: '完全不知道自己要什么', score: 32 }
+      ]},
 
-function isAnswered(id){
-  const v = answers[id];
-  if(Array.isArray(v)) return v.length > 0;
-  return v !== undefined && v !== null && v !== '';
-}
+    // ===== 职业发展 (4题) =====
+    { dim: '职业发展', icon: '💼', text: '你目前的职业/职位级别是？', hint: '职业地位是相亲市场的硬通货。', type: 'choice',
+      options: [
+        { text: '高管/老板/核心骨干', score: 95 },
+        { text: '中层管理/资深专家', score: 85 },
+        { text: '骨干员工/有一定资历', score: 75 },
+        { text: '普通员工', score: 62 },
+        { text: '刚入职/不稳定', score: 48 },
+        { text: '目前待业/自由职业', score: 40 }
+      ]},
+    { dim: '职业发展', icon: '💼', text: '你所在行业的前景和稳定性？', hint: '行业前景影响长期发展预期。', type: 'choice',
+      options: [
+        { text: '朝阳行业，很有前景', score: 90 },
+        { text: '稳定行业，旱涝保收', score: 85 },
+        { text: '成熟行业，还行', score: 72 },
+        { text: '下行行业，有点担心', score: 52 },
+        { text: '夕阳行业，很不稳定', score: 38 }
+      ]},
+    { dim: '职业发展', icon: '💼', text: '你在工作中的上升空间大吗？', hint: '上升空间意味着未来的潜力。', type: 'choice',
+      options: [
+        { text: '空间很大，前景很好', score: 90 },
+        { text: '有一定空间，稳步上升', score: 78 },
+        { text: '空间不大，但很稳定', score: 65 },
+        { text: '基本没什么上升空间', score: 50 },
+        { text: '职业发展很迷茫', score: 38 }
+      ]},
+    { dim: '职业发展', icon: '💼', text: '你的工作忙吗，有时间谈恋爱吗？', hint: '工作太忙会影响谈恋爱和相处。', type: 'choice',
+      options: [
+        { text: '朝九晚五，时间很充裕', score: 88 },
+        { text: '偶尔加班，大部分时间有', score: 78 },
+        { text: '比较忙，但能挤时间', score: 65 },
+        { text: '很忙，没什么时间精力', score: 48 },
+        { text: '特别忙，基本没时间', score: 32 }
+      ]}
+  ];
 
-// ============ 介绍页 ============
-function checkResumeAndHistory(){
-  const progress = loadProgress();
-  const resumeCard = document.getElementById("resumeCard");
-  if(progress && progress.answers){
-    const count = questions.filter(q => isAnswered(q.id) && progress.answers[q.id] !== undefined).length;
-    if(count > 0 && count < questions.length){
-      document.getElementById("resumeProgress").textContent = `已完成 ${count} / ${questions.length} 题`;
-      resumeCard.style.display = "block";
-    }
-  }
-  const history = getHistory();
-  const historyCard = document.getElementById("historyCard");
-  if(history.length > 0){
-    document.getElementById("historyCount").textContent = `你有 ${history.length} 次梳理记录`;
-    historyCard.style.display = "block";
-  }
-}
-checkResumeAndHistory();
+  let currentQuestion = 0;
+  let answers = new Array(questions.length).fill(null);
+  let isNavigating = false; // 防止快速点击重复跳转
 
-function resumeQuiz(){
-  const progress = loadProgress();
-  if(!progress) return;
-  answers = progress.answers || {};
-  currentQ = 0;
-  // 找到第一个未答的题
-  for(let i = 0; i < questions.length; i++){
-    if(!isAnswered(questions[i].id)){ currentQ = i; break; }
-    if(i === questions.length - 1) currentQ = 0;
-  }
-  showQuiz();
-}
+  // 段位配置
+  const ranks = [
+    { min: 90, title: '第一梯队', desc: '各方面条件都很能打，在相亲市场属于很有竞争力的类型。不用太愁找对象，重点是挑自己真正喜欢的。', percentile: '' },
+    { min: 80, title: '优质选手', desc: '条件不错，有突出亮点，在相亲市场挺受欢迎的。找准自己的定位，遇到合适的人概率很高。', percentile: '' },
+    { min: 70, title: '中等偏上', desc: '基础条件扎实，属于靠谱类型。虽然不是最耀眼的，但踏实稳重的形象很加分。', percentile: '' },
+    { min: 60, title: '普普通通', desc: '跟大多数人一样，条件一般般。有一定基础，但也有不少可以提升的地方。', percentile: '' },
+    { min: 0, title: '还需努力', desc: '目前在相亲市场竞争力偏弱，不用焦虑，先从最容易提升的地方开始行动。', percentile: '' }
+  ];
 
-// ============ 答题 ============
-function startQuiz(){
-  answers = {};
-  currentQ = 0;
-  showQuiz();
-}
-
-function showQuiz(){
-  document.getElementById("introScreen").style.display = "none";
-  document.getElementById("historyScreen").style.display = "none";
-  document.getElementById("resultScreen").style.display = "none";
-  document.getElementById("quizScreen").style.display = "block";
-  renderQuestion();
-  renderNavGrid();
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-function renderQuestion(){
-  const q = questions[currentQ];
-  document.getElementById("qNumber").textContent = currentQ + 1;
-  document.getElementById("qProgressNum").textContent = `第 ${currentQ + 1} 题`;
-  document.getElementById("qTitle").textContent = q.title;
-  document.getElementById("sectionLabel").textContent = q.section;
-
-  const hintEl = document.getElementById("qHint");
-  if(q.hint){
-    hintEl.textContent = "💡 " + q.hint;
-    hintEl.style.display = "block";
-  } else {
-    hintEl.style.display = "none";
-  }
-
-  buildQuestionContent(q);
-  updateProgress();
-  updateNavButtons();
-  saveProgress();
-}
-
-function buildQuestionContent(q){
-  const container = document.getElementById("qContent");
-  const val = answers[q.id];
-
-  if(q.type === 'number'){
-    container.innerHTML = `
-      <div class="input-row">
-        <input type="number" class="input-field" id="qInput"
-               min="${q.min}" max="${q.max}"
-               value="${val || ''}" placeholder="请输入${q.title.replace('你','').replace('？','')}"
-               oninput="answers['${q.id}'] = this.value; saveProgress()">
-        <span class="input-unit">${q.unit}</span>
-      </div>
-    `;
-    setTimeout(() => { const el = document.getElementById("qInput"); if(el) el.focus(); }, 100);
-  }
-  else if(q.type === 'text'){
-    container.innerHTML = `
-      <input type="text" class="input-field" id="qInput"
-             maxlength="${q.max||40}" value="${val||''}"
-             placeholder="${q.placeholder||''}"
-             oninput="answers['${q.id}'] = this.value; saveProgress()">
-    `;
-    setTimeout(() => { const el = document.getElementById("qInput"); if(el) el.focus(); }, 100);
-  }
-  else if(q.type === 'multi'){
-    const selected = Array.isArray(val) ? val : [];
-    container.innerHTML = `
-      <div class="options-list">
-        ${q.options.map(opt => `
-          <div class="option-item multi ${selected.includes(opt)?'selected':''}"
-               onclick="toggleMultiOption('${q.id}', '${opt}', ${q.max||3})">
-            <span class="option-radio"></span>${opt}
-          </div>
-        `).join("")}
-      </div>
-      <p style="font-size:.78rem;color:var(--text-light);margin-top:10px;text-align:center">
-        最多选 ${q.max||3} 项，已选 <span id="multiCount">${selected.length}</span> 项
-      </p>
-    `;
-  }
-  else {
-    // 单选
-    container.innerHTML = `
-      <div class="options-list">
-        ${q.options.map(opt => `
-          <div class="option-item ${val===opt?'selected':''}"
-               onclick="selectOption('${q.id}', '${opt}')">
-            <span class="option-radio"></span>${opt}
-          </div>
-        `).join("")}
-      </div>
-    `;
-  }
-}
-
-function selectOption(id, value){
-  answers[id] = value;
-  updateProgress();
-  updateNavGrid();
-  saveProgress();
-  // 更新选中状态
-  document.querySelectorAll("#qContent .option-item").forEach(el => {
-    el.classList.toggle("selected", el.textContent.trim() === value);
-  });
-  // 短延迟后下一题
-  setTimeout(() => {
-    if(currentQ < questions.length - 1){
-      slideToQuestion(currentQ + 1, "right");
-    }
-  }, 200);
-}
-
-function toggleMultiOption(id, opt, max){
-  let arr = Array.isArray(answers[id]) ? [...answers[id]] : [];
-  const idx = arr.indexOf(opt);
-  if(idx > -1){
-    arr.splice(idx, 1);
-  } else {
-    if(arr.length >= max){
-      showToast(`最多只能选 ${max} 项哦`);
-      return;
-    }
-    arr.push(opt);
-  }
-  answers[id] = arr;
-  updateProgress();
-  updateNavGrid();
-  saveProgress();
-  // 更新UI
-  document.querySelectorAll("#qContent .option-item").forEach(el => {
-    const text = el.textContent.trim();
-    el.classList.toggle("selected", arr.includes(text));
-  });
-  const countEl = document.getElementById("multiCount");
-  if(countEl) countEl.textContent = arr.length;
-}
-
-function skipQuestion(){
-  if(currentQ < questions.length - 1){
-    slideToQuestion(currentQ + 1, "right");
-  } else {
-    goToResult();
-  }
-}
-
-function updateProgress(){
-  const answeredCount = questions.filter(q => isAnswered(q.id)).length;
-  document.getElementById("progressText").textContent = `${currentQ + 1} / ${questions.length}`;
-  document.getElementById("progressBar").style.width = ((currentQ + 1) / questions.length * 100) + "%";
-  document.getElementById("qAnsweredHint").textContent = `已答 ${answeredCount} 题`;
-  updateNavGrid();
-}
-
-function updateNavButtons(){
-  document.getElementById("prevBtn").style.visibility = currentQ === 0 ? "hidden" : "visible";
-  const nextBtn = document.getElementById("nextBtn");
-  if(currentQ === questions.length - 1){
-    nextBtn.textContent = "查看结果 →";
-  } else {
-    nextBtn.textContent = "下一题 →";
-  }
-}
-
-// 滑动切题
-function slideToQuestion(qIdx, direction){
-  if(qIdx < 0 || qIdx >= questions.length) return;
-  if(isSliding) return;
-  isSliding = true;
-
-  const card = document.getElementById("questionCard");
-  const outClass = direction === "right" ? "slide-out-left" : "slide-out-right";
-  const inClass = direction === "right" ? "slide-in-right" : "slide-in-left";
-
-  card.classList.add(outClass);
-
-  setTimeout(() => {
-    currentQ = qIdx;
+  // 初始化
+  function init() {
+    renderNavList();
     renderQuestion();
-
-    card.classList.remove(outClass);
-    card.classList.add(inClass);
-    void card.offsetWidth;
-    requestAnimationFrame(() => { card.classList.remove(inClass); });
-
-    setTimeout(() => { isSliding = false; }, 350);
-  }, 220);
-}
-
-function prevQuestion(){
-  if(currentQ > 0) slideToQuestion(currentQ - 1, "left");
-}
-function nextQuestion(){
-  // 如果当前题未答且是必填类型，也允许跳过
-  if(currentQ < questions.length - 1){
-    slideToQuestion(currentQ + 1, "right");
-  } else {
-    goToResult();
-  }
-}
-
-// 键盘快捷键
-document.addEventListener("keydown", (e) => {
-  const quizScreen = document.getElementById("quizScreen");
-  if(quizScreen.style.display !== "block") return;
-  if(document.getElementById("navPanel").classList.contains("open")) return;
-
-  if(e.key === "ArrowLeft"){ prevQuestion(); }
-  else if(e.key === "ArrowRight"){ nextQuestion(); }
-  else if(e.key >= "1" && e.key <= "9"){
-    const q = questions[currentQ];
-    if(q.options && !q.type){
-      const idx = parseInt(e.key) - 1;
-      if(idx < q.options.length) selectOption(q.id, q.options[idx]);
-    }
-  }
-});
-
-// ============ 导航面板 ============
-function toggleNavPanel(){
-  const panel = document.getElementById("navPanel");
-  panel.classList.toggle("open");
-  if(panel.classList.contains("open")) renderNavGrid();
-}
-
-function renderNavGrid(){
-  const grid = document.getElementById("navGrid");
-  grid.innerHTML = "";
-  questions.forEach((q, i) => {
-    const dot = document.createElement("div");
-    dot.className = "nav-dot";
-    if(i === currentQ) dot.classList.add("current");
-    if(isAnswered(q.id)) dot.classList.add("answered");
-    dot.textContent = i + 1;
-    dot.title = q.title;
-    dot.onclick = () => {
-      toggleNavPanel();
-      const direction = i > currentQ ? "right" : "left";
-      if(i !== currentQ) slideToQuestion(i, direction);
-    };
-    grid.appendChild(dot);
-  });
-}
-
-function updateNavGrid(){
-  const grid = document.getElementById("navGrid");
-  if(!grid.children.length) return;
-  questions.forEach((q, i) => {
-    const dot = grid.children[i];
-    if(!dot) return;
-    dot.classList.toggle("current", i === currentQ);
-    dot.classList.toggle("answered", isAnswered(q.id));
-  });
-}
-
-// 点击面板外部关闭
-document.addEventListener("click", (e) => {
-  const panel = document.getElementById("navPanel");
-  const toggle = document.querySelector(".nav-toggle");
-  if(panel.classList.contains("open") && !panel.contains(e.target) && !toggle.contains(e.target)){
-    panel.classList.remove("open");
-  }
-});
-
-// ============ 结果页 ============
-function goToResult(){
-  saveToHistory();
-  clearProgress();
-  buildReport();
-  document.getElementById("quizScreen").style.display = "none";
-  document.getElementById("resultScreen").style.display = "block";
-  window.scrollTo({top:0,behavior:"smooth"});
-  showToast("报告已生成 💌");
-}
-
-function buildReport(){
-  const answeredCount = questions.filter(q => isAnswered(q.id)).length;
-
-  // 摘要卡片
-  document.getElementById("resultSummary").innerHTML = `
-    <div class="summary-card">
-      <div class="label">已填写</div>
-      <div class="value">${answeredCount}</div>
-      <div class="label">/ ${questions.length} 项</div>
-    </div>
-    <div class="summary-card">
-      <div class="label">择偶偏好</div>
-      <div class="value">10</div>
-      <div class="label">个维度</div>
-    </div>
-    <div class="summary-card">
-      <div class="label">行动建议</div>
-      <div class="value">8</div>
-      <div class="label">条</div>
-    </div>
-  `;
-
-  document.getElementById("reportSummary").textContent =
-    answeredCount > 0
-      ? `你已填写 ${answeredCount} / ${questions.length} 项。下面是基于你回答的整理和建议。`
-      : "你暂未填写回答。这里提供空白梳理框架，返回填写后可以生成对应解读。";
-
-  buildInsights();
-  buildPreferenceList();
-  buildIntroDraft();
-  buildTopics();
-  buildActions();
-}
-
-// 洞察生成
-function buildInsights(){
-  const insights = [];
-  const a = answers;
-
-  function add(title, id, meaning, action){
-    if(isAnswered(id)){
-      const basis = Array.isArray(a[id]) ? a[id].join("、") : String(a[id]);
-      insights.push({title, basis, meaning, action});
-    }
   }
 
-  if(isAnswered('strength')){
-    add('用经历说明你想展示的特点', 'strength',
-      '这些是你选择的自我描述，不代表他人已经作出相同评价。',
-      '从其中选一个特点，补充一件你亲身经历的小事：发生了什么，你做了什么。');
-  }
-  if(isAnswered('hobbies')){
-    add('从真实日常开始介绍', 'hobbies',
-      '你选择了愿意分享的兴趣，可以作为认识彼此的起点。',
-      '准备一个最近与这些兴趣有关的小片段，并问问对方平时怎样度过休息日。');
-  }
-
-  if(isAnswered('height')){
-    add('身高信息的沟通时机', 'height',
-      '身高是你选择提供的信息，它是客观描述，不是价值评价。',
-      '如果对方很在意身高，可以在认识初期说明，避免浪费彼此时间。');
-  }
-
-  if(isAnswered('education') && answers.education !== '不想填写'){
-    add('学历背景与共同话题', 'education',
-      '学历是成长经历的一部分，不代表一个人的全部。',
-      '可以聊聊专业选择的原因、学习中最有收获的事，而不是只说学历名称。');
-  }
-
-  const chatTips = {
-    '比较容易主动分享':['主动分享是你的自述习惯，也可以留意对方是否有表达空间。','分享一小段后停下来，邀请对方讲讲自己的经历。'],
-    '先倾听，熟悉后再分享':['你更习惯先观察、慢慢熟悉，可以提前说明自己的交流节奏。','准备两件愿意分享的生活小事，听完对方后也主动说一点自己的感受。'],
-    '经常不知道怎么接话':['你提到接话有困难，可以先练习具体追问，不必强迫自己变得幽默。','从对方刚提到的小事追问一次，再分享自己的类似经历。'],
-    '看场合，还不确定':['你还没有确定的交流模式，适合先观察具体情境。','见面后记录哪个话题最自然，以及什么时候你觉得轻松。']
-  };
-  if(chatTips[a.chat]) add('找到舒服的聊天节奏', 'chat', ...chatTips[a.chat]);
-
-  const conflictTips = {
-    '说明感受，一起讨论':['你倾向于直接讨论，可以进一步确认双方的理解是否一致。','试着说"我当时的感受是……我希望……你怎么看？"'],
-    '先冷静，再约时间沟通':['你需要先整理情绪；让对方知道何时继续沟通会更清楚。','需要暂停时，说明原因，并与对方约定一个双方接受的沟通时间。'],
-    '容易着急，事后再解释':['你注意到自己在分歧中容易着急，可以提前准备暂停表达。','在情绪升高时先提出暂停，平静后描述具体事情、感受和需要。'],
-    '倾向回避，不太会开口':['你提到不容易开口，可以从小分歧练习表达。','先写下想表达的一句话，再选择双方有时间时讨论一件具体的小事。']
-  };
-  if(conflictTips[a.conflict]) add('为分歧准备一种表达方式', 'conflict', ...conflictTips[a.conflict]);
-
-  const expressTips = {
-    '直接说出来':['你习惯直接表达关心，也可以确认对方是否喜欢这种方式。','试着把关心说出来的同时，也问问对方感受到了什么。'],
-    '用行动照顾对方':['你更习惯用行动表达，有时对方可能感受不到你的心意。','在做了关心对方的事之后，可以补充一句你当时的想法。'],
-    '默默记在心里':['你把关心放在心里，但对方不一定知道你在在意。','选一件你默默为对方做过或想过的事，找机会告诉对方。'],
-    '不太会表达，还在学习':['你意识到表达关心是需要练习的，这本身就是很好的开始。','从一个小习惯开始，比如每天说一句"今天辛苦了"或分享一件小事。']
-  };
-  if(expressTips[a.express]) add('了解你的关心表达方式', 'express', ...expressTips[a.express]);
-
-  // 生活方式
-  if(isAnswered('sleep')){
-    const sleepTips = {
-      '早睡早起型':['你是早起型，作息规律也是一种生活节奏。','可以聊聊周末是不是也一样早起，以及希望伴侣的作息是否合拍。'],
-      '正常作息（11-12点睡）':['你的作息比较规律，大多数人也在这个区间。','一起住后作息差异往往会出现，可以提前讨论各自的底线。'],
-      '晚睡晚起型':['你习惯晚睡晚起，这是个人节律，不是"懒"。','如果对方作息不同，可以讨论怎样互不打扰，以及周末怎么安排。'],
-      '经常熬夜，不固定':['你的作息不太规律，可能和工作或习惯有关。','想想有没有想调整的方向，以及希望对方怎样看待这件事。']
-    };
-    if(sleepTips[a.sleep]) add('作息习惯也值得提前了解', 'sleep', ...sleepTips[a.sleep]);
+  function renderNavList() {
+    const navList = document.getElementById('navList');
+    const dims = getDimensions();
+    let html = '';
+    let globalIdx = 0;
+    
+    dims.forEach(dim => {
+      const dimQ = questions.filter(q => q.dim === dim);
+      const dimIcon = dimQ[0].icon;
+      const dimStart = globalIdx;
+      const dimEnd = globalIdx + dimQ.length;
+      const answeredInDim = answers.slice(dimStart, dimEnd).filter(a => a).length;
+      
+      html += `<li style="padding: 6px 4px; font-size: 11px; color: var(--rose-500); font-weight: 600; letter-spacing: 0.1em; margin-top: 8px;">
+        ${dimIcon} ${dim} <span class="dim-progress" data-dim="${dim}" style="color: var(--ink-light); font-weight: 400;">(${answeredInDim}/${dimQ.length})</span>
+      </li>`;
+      
+      dimQ.forEach((q, localIdx) => {
+        const idx = globalIdx;
+        html += `
+          <li class="nav-item ${idx === currentQuestion ? 'active' : ''} ${answers[idx] ? 'done' : ''}" onclick="jumpTo(${idx})">
+            <span class="nav-dot"></span>
+            <span class="nav-text">第${localIdx + 1}题</span>
+          </li>
+        `;
+        globalIdx++;
+      });
+    });
+    
+    navList.innerHTML = html;
   }
 
-  if(isAnswered('diet')){
-    add('饮食偏好是日常相处的细节', 'diet',
-      '吃不到一起有时比想象中影响更大，但也可以协商。',
-      '提前说清楚忌口或偏好，约会选餐厅时也能更好安排。');
-  }
-
-  if(isAnswered('exercise')){
-    add('运动习惯反映生活节奏', 'exercise',
-      '运动习惯不同也可以相处，关键是彼此尊重对方的安排。',
-      '如果喜欢运动，可以约一起体验；如果不喜欢，也说说你更享受什么活动。');
-  }
-
-  if(isAnswered('pet')){
-    const petTips = {
-      '有宠物，很喜欢':['宠物是你生活的一部分，也是一种责任。','可以分享养宠物的故事，同时了解对方对宠物的态度。'],
-      '喜欢但暂时没养':['你喜欢宠物，只是目前条件不允许。','可以聊聊以后想养什么，以及对方的想法。'],
-      '不反感，可以相处':['你对宠物持开放态度，这很好。','如果对方有宠物，可以先接触试试，确认自己真实的感受。'],
-      '不喜欢/过敏，最好不要':['你对宠物有明确的态度，这需要提前沟通。','在关系早期说明这个底线，避免后期产生不必要的矛盾。']
-    };
-    if(petTips[a.pet]) add('宠物也是关系中的重要议题', 'pet', ...petTips[a.pet]);
-  }
-
-  const careTips = {
-    '暂无固定照护安排':['你目前没有固定照护安排，未来仍可能变化。','在关系逐步稳定时，互相了解对家庭责任的期待。'],
-    '有定期照护安排，时间可协调':['照护是你生活的一部分，需要讨论时间如何安排。','整理自己固定需要的时间，以及可以协商的见面时段。'],
-    '有长期照护安排，需要提前沟通':['长期照护涉及共同生活安排，不是对个人或家庭的优劣评价。','整理照护所需时间、可获得的支持和希望对方理解的边界，再选择适当时机说明。'],
-    '尚不确定':['这部分安排还不明确，不需要现在作出结论。','先了解自己的责任和支持情况，再决定有哪些内容需要与伴侣沟通。']
-  };
-  if(careTips[a.care]) add('提前沟通家庭照护安排', 'care', ...careTips[a.care]);
-
-  add('确认居住期待', 'housing',
-    '这是你目前对居住的倾向，实际安排需要双方协商。',
-    '聊聊独立空间、通勤与照护需求，分别说出必要条件和可协商部分。');
-  add('协调相处频率', 'lifestyle',
-    '你表达了希望联系和见面的节奏，可以和对方确认各自的需要。',
-    '分别说出工作日和休息日希望怎样联系，以及需要保留的个人时间。');
-  add('安排认识彼此的时间', 'work',
-    '这是你目前的生活节奏，不代表你投入关系的意愿。',
-    '找出近期可以安心交流的时段，提前说明加班、轮班或学习安排。');
-  add('把开支安排说清楚', 'finance',
-    '共同开支涉及双方的习惯与责任，不能仅凭收入判断。',
-    '用房租、日常开支或旅行预算等具体场景，讨论怎样分担更合适。');
-
-  if(isAnswered('marriage')){
-    const marriageTips = {
-      '人生重要的一部分':['你对婚姻有明确的期待，这是一个很重要的人生选择。','在认识初期可以温和地聊一聊对婚姻的看法，确认双方方向是否一致。'],
-      '顺其自然，遇到合适的人再说':['你对婚姻持开放态度，不勉强也不排斥。','可以想想"合适的人"对你来说具体是什么样的，有哪些关键特质。'],
-      '不是必需，但可以考虑':['你不把婚姻当作人生必须项，这是一种很清醒的态度。','如果对方很看重婚姻，需要坦诚沟通你的想法，不要给对方虚假的期待。'],
-      '更倾向不婚':['你更倾向不婚的生活方式，这是值得尊重的个人选择。','在关系认真之前就说明你的态度，避免浪费彼此的时间和感情。']
-    };
-    if(marriageTips[a.marriage]) add('对婚姻的看法需要坦诚沟通', 'marriage', ...marriageTips[a.marriage]);
-  }
-
-  if(isAnswered('roles')){
-    add('家庭角色分工值得提前讨论', 'roles',
-      '家庭角色没有标准答案，关键是双方都觉得公平、愿意承担。',
-      '用具体场景讨论：比如家务怎么分、谁管钱、生病时谁照顾。');
-  }
-  add('讨论关系进度', 'timeline',
-    '这是你自己的时间期待，并不代表对方有相同计划。',
-    '在互有继续了解意愿后，问问对方的关系目标，确认节奏是否可以协商。');
-  add('确认生育议题', 'children',
-    '生育意愿是需要双方主动表达的议题，未确定时也可以如实说明。',
-    '在适当阶段直接交流各自的意愿和顾虑，不预设对方会改变想法。');
-  add('对齐定居方向', 'location',
-    '定居选择会影响共同生活，需要结合双方情况讨论。',
-    '分别说出目前工作、家庭和城市选择上的约束与可调整空间。');
-  add('把价值观放进具体场景', 'values',
-    '这些词代表你想重点了解的方向，实际含义可能因人而异。',
-    '从你选的一项出发，举一个日常场景，问问双方会如何处理。');
-
-  const container = document.getElementById("insightList");
-  if(insights.length === 0){
-    container.innerHTML = '<p style="text-align:center;color:var(--text-soft);padding:20px 0">还没有填写内容，先去答题吧~</p>';
-    return;
-  }
-  container.innerHTML = insights.map(ins => `
-    <div class="insight-item">
-      <h4>${ins.title}</h4>
-      <div class="basis">📝 你的回答：${ins.basis}</div>
-      <p class="meaning">${ins.meaning}</p>
-      <div class="action">💡 建议：${ins.action}</div>
-    </div>
-  `).join("");
-}
-
-// 择偶偏好列表
-function buildPreferenceList(){
-  const container = document.getElementById("preferenceList");
-  container.innerHTML = preferenceFields.map((f, idx) => {
-    const p = preferences[f.id];
-    const priorityObj = PRIORITY_LEVELS.find(l => l.key === p.priority) || PRIORITY_LEVELS[0];
-    const displayVal = f.type === 'range'
-      ? `${p.value.min}-${p.value.max}${f.unit}`
-      : p.value;
-
-    let rangeHtml = '';
-    if(f.type === 'range'){
-      rangeHtml = `
-        <div class="range-wrap" style="margin-top:10px">
-          <span class="range-label">最小</span>
-          <input type="range" min="${f.min}" max="${f.max}" value="${p.value.min}"
-                 oninput="updatePrefRange('${f.id}','min',this.value)">
-          <span class="range-value" id="${f.id}MinVal">${p.value.min}${f.unit}</span>
-        </div>
-        <div class="range-wrap">
-          <span class="range-label">最大</span>
-          <input type="range" min="${f.min}" max="${f.max}" value="${p.value.max}"
-                 oninput="updatePrefRange('${f.id}','max',this.value)">
-          <span class="range-value" id="${f.id}MaxVal">${p.value.max}${f.unit}</span>
+  function renderQuestion() {
+    const q = questions[currentQuestion];
+    const container = document.getElementById('questionContainer');
+    
+    let optionsHtml = '';
+    if (q.type === 'choice') {
+      const selected = answers[currentQuestion] && answers[currentQuestion].text;
+      optionsHtml = `
+        <div class="options">
+          ${q.options.map((opt, i) => `
+            <div class="option-item ${selected === opt.text ? 'selected' : ''}" 
+                 onclick="selectOption(${i})">
+              <div class="option-radio"></div>
+              <div class="option-text">${opt.text}</div>
+            </div>
+          `).join('')}
         </div>
       `;
     }
 
-    return `
-      <div class="priority-section">
-        <div class="priority-header">
-          <span class="priority-label">${f.label}</span>
-          <select class="priority-select" onchange="updatePrefPriority('${f.id}', this.value)">
-            ${PRIORITY_LEVELS.map(l => `<option value="${l.key}" ${p.priority===l.key?'selected':''}>${l.label}</option>`).join("")}
-          </select>
-        </div>
-        ${f.options
-          ? `<select class="select-field" onchange="updatePrefValue('${f.id}', this.value)">
-              ${f.options.map(o => `<option value="${o}" ${p.value===o?'selected':''}>${o}</option>`).join("")}
-            </select>`
-          : rangeHtml
-        }
-        <div class="priority-bar-wrap">
-          <div class="priority-bar-fill ${p.priority}" style="width:${p.priority==='unsorted'?10:p.priority==='must'?100:p.priority==='important'?70:40}%"></div>
-        </div>
-      </div>
+    // 计算当前维度内的题号
+    const dimQuestions = questions.filter(x => x.dim === q.dim);
+    const dimCountBefore = questions.slice(0, currentQuestion).filter(x => x.dim === q.dim).length;
+    
+    container.innerHTML = `
+      <div class="question-section">${q.icon} ${q.dim}</div>
+      <div class="question-number">第 ${currentQuestion + 1} 题 / 共 ${questions.length} 题 · 本维度 ${dimCountBefore + 1}/${dimQuestions.length}</div>
+      <h2 class="question-text">${q.text}</h2>
+      <p class="question-hint">💡 ${q.hint}</p>
+      ${optionsHtml}
     `;
-  }).join("");
-}
 
-function updatePrefPriority(id, priority){
-  preferences[id].priority = priority;
-  localStorage.setItem(PREF_KEY, JSON.stringify(preferences));
-  buildPreferenceList();
-}
-function updatePrefValue(id, value){
-  preferences[id].value = value;
-  localStorage.setItem(PREF_KEY, JSON.stringify(preferences));
-}
-function updatePrefRange(id, type, value){
-  const val = parseInt(value);
-  preferences[id].value[type] = val;
-  const f = preferenceFields.find(pf => pf.id === id);
-  const el = document.getElementById(`${id}${type==='min'?'Min':'Max'}Val`);
-  if(el) el.textContent = val + f.unit;
-  localStorage.setItem(PREF_KEY, JSON.stringify(preferences));
-}
+    container.classList.remove('fade-in');
+    void container.offsetWidth;
+    container.classList.add('fade-in');
 
-function updatePriorityChart(){
-  const section = document.getElementById("priorityChartSection");
-  section.style.display = "block";
-  section.scrollIntoView({behavior:"smooth", block:"center"});
-  renderPriorityChart();
-}
+    updateNavState();
+    updateDimProgress();
+    updateProgress();
+    updateButtons();
+  }
 
-function renderPriorityChart(){
-  const ctx = document.getElementById("priorityChart").getContext("2d");
-  const counts = { must:0, important:0, negotiable:0, unsorted:0 };
-  Object.values(preferences).forEach(p => { counts[p.priority]++; });
-
-  const textSoft = getComputedStyle(document.documentElement).getPropertyValue("--text-soft").trim();
-  const rose = getComputedStyle(document.documentElement).getPropertyValue("--rose").trim();
-  const coral = getComputedStyle(document.documentElement).getPropertyValue("--coral").trim();
-  const mint = getComputedStyle(document.documentElement).getPropertyValue("--mint-deep").trim();
-  const border = getComputedStyle(document.documentElement).getPropertyValue("--border").trim();
-
-  if(priorityChartInstance) priorityChartInstance.destroy();
-  priorityChartInstance = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: ["必须满足", "比较看重", "可以商量", "暂未分类"],
-      datasets: [{
-        data: [counts.must, counts.important, counts.negotiable, counts.unsorted],
-        backgroundColor: [rose, coral, mint, border],
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      cutout: "60%",
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { padding: 16, font: { size: 12 }, color: textSoft, usePointStyle: true, pointStyle: "circle" }
-        },
-        tooltip: {
-          backgroundColor: "rgba(74,63,69,.92)",
-          padding: 12, cornerRadius: 8,
-          callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.raw} 项` }
-        }
-      }
-    }
-  });
-}
-
-// 自我介绍生成
-function buildIntroDraft(){
-  const a = answers;
-  const parts = [];
-  if(a.age) parts.push(`我今年${a.age}岁${a.height?`，身高${a.height}cm`:''}。`);
-  if(a.city) parts.push(`目前常住在${a.city}。`);
-  if(a.education && a.education !== '不想填写') parts.push(`学历是${a.education}。`);
-  if(a.work) parts.push(`工作与生活节奏是${a.work}。`);
-  if(Array.isArray(a.hobbies) && a.hobbies.length) parts.push(`平时喜欢${a.hobbies.join("、")}。`);
-
-  // 生活方式
-  const lifestyleBits = [];
-  if(a.sleep) lifestyleBits.push(`作息是${a.sleep}`);
-  if(a.diet) lifestyleBits.push(`饮食${a.diet.replace(/（.*?）/g,'')}`);
-  if(a.exercise) lifestyleBits.push(`${a.exercise.replace(/，.*$/g,'')}`);
-  if(lifestyleBits.length) parts.push(`生活方面，${lifestyleBits.join('，')}。`);
-
-  if(a.pet && a.pet !== '不反感，可以相处') parts.push(`对宠物的态度：${a.pet}。`);
-
-  if(Array.isArray(a.strength) && a.strength.length) parts.push(`我觉得自己${a.strength.join("、")}。`);
-  if(Array.isArray(a.values) && a.values.length) parts.push(`相处中，我比较看重${a.values.join("、")}。`);
-  if(a.timeline) parts.push(`对关系的期待是${a.timeline}。`);
-
-  const draft = parts.length
-    ? parts.join("\n") + "\n\n以上是我的基本情况，期待和你慢慢了解彼此。"
-    : "（填写题目后，这里会自动生成一份自我介绍草稿，你可以自由修改~）";
-
-  document.getElementById("introDraft").value = draft;
-}
-
-function copyIntro(){
-  const text = document.getElementById("introDraft").value;
-  navigator.clipboard.writeText(text).then(() => showToast("已复制到剪贴板 📋"));
-}
-
-// 见面话题
-function buildTopics(){
-  const a = answers;
-  const topics = [];
-
-  // 基于兴趣
-  if(Array.isArray(a.hobbies) && a.hobbies.length){
-    a.hobbies.forEach(h => {
-      topics.push({icon:'🎯', text:`聊聊最近一次${h}的经历，有什么好玩的事情`});
+  // 只更新各维度标题上的已答数量，不重建侧边栏
+  function updateDimProgress() {
+    const dims = getDimensions();
+    let globalIdx = 0;
+    dims.forEach(dim => {
+      const total = questions.filter(q => q.dim === dim).length;
+      const answered = answers.slice(globalIdx, globalIdx + total).filter(a => a).length;
+      const span = document.querySelector(`.dim-progress[data-dim="${dim}"]`);
+      if (span) span.textContent = `(${answered}/${total})`;
+      globalIdx += total;
     });
   }
-  // 基于生活方式
-  if(a.sleep) topics.push({icon:'🌙', text:'你是早起型还是夜猫子？周末一般怎么安排'});
-  if(a.diet) topics.push({icon:'🍜', text:'最近吃到最满意的一顿饭是什么'});
-  if(a.exercise && a.exercise !== '工作已经够累了') topics.push({icon:'🏃', text:'最近有没有发现什么有意思的运动方式'});
-  if(a.pet && (a.pet.includes('喜欢') || a.pet.includes('有宠物'))) topics.push({icon:'🐾', text:'聊聊你养过的宠物，或者最喜欢哪种小动物'});
-  // 基于工作
-  if(a.work) topics.push({icon:'💼', text:'最近工作中有没有让你觉得有成就感的事'});
-  // 通用
-  topics.push({icon:'🌆', text:'你理想中的周末是什么样的'});
-  topics.push({icon:'✈️', text:'如果有一周假期，最想去哪里'});
-  topics.push({icon:'🎵', text:'最近在循环哪首歌或哪部剧'});
-  topics.push({icon:'🏡', text:'你理想的居住环境是什么样的'});
 
-  // 只取前8个
-  const showTopics = topics.slice(0, 8);
-  document.getElementById("topicList").innerHTML = showTopics.map(t => `
-    <div class="topic-item">
-      <span class="icon">${t.icon}</span>
-      <span>${t.text}</span>
-    </div>
-  `).join("");
-}
-
-// 行动清单
-function buildActions(){
-  const a = answers;
-  const actions = [
-    { text: '整理一段 30 秒的自我介绍，包含年龄、城市和一个兴趣点', done: false },
-    { text: '选一张最近的生活照作为相亲资料的主图', done: false },
-    { text: '在社交平台或相亲资料中补充 2 个具体兴趣描述', done: false },
-    { text: '准备 3 个见面时可以聊的话题（参考上面的话题清单）', done: false },
-    { text: '写下你最看重的 3 个择偶条件，区分"必须"和"可以商量"', done: false },
-    { text: '本周主动联系 1 个有好感的人，开启一次对话', done: false },
-    { text: '安排一次相亲或约会见面，提前确认时间地点', done: false },
-    { text: '见面后花 10 分钟复盘：哪些话题聊得最开心？下次想了解什么？', done: false }
-  ];
-
-  // 基于 focus 调整顺序
-  if(a.focus === '改善自我介绍'){
-    const introItems = actions.filter(a => a.text.includes('自我介绍') || a.text.includes('生活照'));
-    const others = actions.filter(a => !a.text.includes('自我介绍') && !a.text.includes('生活照'));
-    actions.length = 0;
-    actions.push(...introItems, ...others);
-  } else if(a.focus === '让见面聊天更自然'){
-    const chatItems = actions.filter(a => a.text.includes('话题') || a.text.includes('联系') || a.text.includes('约会'));
-    const others = actions.filter(a => !a.text.includes('话题') && !a.text.includes('联系') && !a.text.includes('约会'));
-    actions.length = 0;
-    actions.push(...chatItems, ...others);
-  } else if(a.focus === '理清自己的择偶条件'){
-    const prefItems = actions.filter(a => a.text.includes('择偶条件') || a.text.includes('3 个'));
-    const others = actions.filter(a => !a.text.includes('择偶条件') && !a.text.includes('3 个'));
-    actions.length = 0;
-    actions.push(...prefItems, ...others);
+  function selectOption(index) {
+    if (isNavigating) return;
+    const opt = questions[currentQuestion].options[index];
+    answers[currentQuestion] = { text: opt.text, score: opt.score };
+    
+    // 自动跳转到下一题（最后一题不自动跳）
+    if (currentQuestion < questions.length - 1) {
+      const fromQuestion = currentQuestion;
+      isNavigating = true;
+      setTimeout(() => {
+        // 如果用户在这 250ms 内手动点了上一题/侧边栏，就不再强制跳转
+        if (currentQuestion === fromQuestion) nextQuestion();
+        isNavigating = false;
+      }, 250); // 给一点视觉反馈时间
+    } else {
+      renderQuestion();
+    }
   }
 
-  const container = document.getElementById("actionList");
-  container.innerHTML = actions.map((act, i) => `
-    <div class="action-item" onclick="toggleAction(${i})">
-      <input type="checkbox" id="action-${i}" ${act.done?'checked':''}>
-      <label for="action-${i}" class="action-text">${act.text}</label>
-    </div>
-  `).join("");
-}
-
-function toggleAction(idx){
-  const cb = document.getElementById(`action-${idx}`);
-  if(cb){
-    cb.checked = !cb.checked;
-    const item = cb.closest('.action-item');
-    item.classList.toggle('done', cb.checked);
+  // 计算各维度的平均分
+  function calcDimScores() {
+    const dimMap = {};
+    const dimCount = {};
+    questions.forEach((q, i) => {
+      if (answers[i] && answers[i].score) {
+        dimMap[q.dim] = (dimMap[q.dim] || 0) + answers[i].score;
+        dimCount[q.dim] = (dimCount[q.dim] || 0) + 1;
+      }
+    });
+    const dims = getDimensions();
+    return dims.map(dim => {
+      const count = dimCount[dim] || 0;
+      return count > 0 ? Math.round(dimMap[dim] / count) : 0;
+    });
   }
-}
 
-// ============ 导出 ============
-function downloadReport(){
-  const a = answers;
-  const dateStr = new Date().toLocaleDateString('zh-CN');
-  let text = `相亲定位与择偶偏好梳理报告\n生成日期：${dateStr}\n${'='.repeat(40)}\n\n`;
-
-  text += `【基本情况】\n`;
-  questions.filter(q => q.section === '个人基本情况' && isAnswered(q.id)).forEach(q => {
-    const val = Array.isArray(a[q.id]) ? a[q.id].join('、') : a[q.id];
-    text += `• ${q.title}：${val}\n`;
-  });
-
-  text += `\n【相处与表达】\n`;
-  questions.filter(q => q.section === '相处与表达' && isAnswered(q.id)).forEach(q => {
-    const val = Array.isArray(a[q.id]) ? a[q.id].join('、') : a[q.id];
-    text += `• ${q.title}：${val}\n`;
-  });
-
-  text += `\n【生活方式】\n`;
-  questions.filter(q => q.section === '生活方式' && isAnswered(q.id)).forEach(q => {
-    const val = Array.isArray(a[q.id]) ? a[q.id].join('、') : a[q.id];
-    text += `• ${q.title}：${val}\n`;
-  });
-
-  text += `\n【家庭与未来】\n`;
-  questions.filter(q => q.section === '家庭与未来' && isAnswered(q.id)).forEach(q => {
-    const val = Array.isArray(a[q.id]) ? a[q.id].join('、') : a[q.id];
-    text += `• ${q.title}：${val}\n`;
-  });
-
-  text += `\n【关系期待】\n`;
-  questions.filter(q => q.section === '关系期待' && isAnswered(q.id)).forEach(q => {
-    const val = Array.isArray(a[q.id]) ? a[q.id].join('、') : a[q.id];
-    text += `• ${q.title}：${val}\n`;
-  });
-
-  text += `\n${'='.repeat(40)}\n【自我介绍草稿】\n${document.getElementById('introDraft').value}\n`;
-
-  text += `\n${'='.repeat(40)}\n【择偶优先级】\n`;
-  preferenceFields.forEach(f => {
-    const p = preferences[f.id];
-    const pri = PRIORITY_LEVELS.find(l => l.key === p.priority)?.label || '';
-    const val = f.type === 'range' ? `${p.value.min}-${p.value.max}${f.unit}` : p.value;
-    text += `• ${f.label}：${val} [${pri}]\n`;
-  });
-
-  text += `\n${'='.repeat(40)}\n【行动清单】\n`;
-  document.querySelectorAll('.action-item').forEach((item, i) => {
-    const cb = item.querySelector('input');
-    const text = item.querySelector('.action-text').textContent;
-    text += `${cb.checked?'☑️':'⬜️'} ${text}\n`;
-  });
-
-  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `相亲定位报告-${dateStr}.txt`;
-  link.click();
-  URL.revokeObjectURL(url);
-  showToast("报告已下载 📄");
-}
-
-// 分享卡片
-function generateShareCard(){
-  const a = answers;
-  const tags = [];
-  if(Array.isArray(a.hobbies) && a.hobbies.length) tags.push(...a.hobbies.slice(0,2));
-  if(a.work) tags.push(a.work);
-  if(Array.isArray(a.values) && a.values.length) tags.push(a.values[0]);
-
-  const dateStr = new Date().toLocaleDateString('zh-CN');
-
-  document.getElementById("shareCard").innerHTML = `
-    <div style="font-size:2.5rem;margin-bottom:12px">💌</div>
-    <h2>相亲定位梳理</h2>
-    <p style="font-size:.82rem;color:#8a7e82;margin-bottom:16px">用几分钟，想清楚你想要的关系</p>
-    <div style="font-size:1rem;color:#4a3f45;margin:8px 0;font-weight:500">
-      ${a.age?a.age+'岁 ':''}${a.city?a.city:''}
-    </div>
-    <div class="sc-tags">
-      ${tags.slice(0,4).map(t=>`<span class="sc-tag">${t}</span>`).join('')}
-    </div>
-    <div class="sc-footer">🌸 了解自己的需要 · ${dateStr}</div>
-  `;
-  document.getElementById("shareModal").classList.add("show");
-}
-
-function closeShareCard(e){
-  if(!e || e.target.id === "shareModal"){
-    document.getElementById("shareModal").classList.remove("show");
+  // 获取9个维度列表（按顺序去重）
+  function getDimensions() {
+    const dims = [];
+    questions.forEach(q => {
+      if (!dims.includes(q.dim)) dims.push(q.dim);
+    });
+    return dims;
   }
-}
 
-function downloadShareCard(){
-  const card = document.getElementById("shareCard");
-  html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = `相亲定位卡片-${Date.now()}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-    showToast("图片已保存 📸");
-  }).catch(() => showToast("生成失败，请重试"));
-}
-
-function backToEdit(){
-  document.getElementById("resultScreen").style.display = "none";
-  document.getElementById("quizScreen").style.display = "block";
-  currentQ = questions.length - 1;
-  renderQuestion();
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-// ============ 历史记录 ============
-function showHistory(){
-  document.getElementById("introScreen").style.display = "none";
-  document.getElementById("quizScreen").style.display = "none";
-  document.getElementById("resultScreen").style.display = "none";
-  document.getElementById("historyScreen").style.display = "block";
-
-  const history = getHistory();
-  const empty = document.getElementById("historyEmpty");
-  const list = document.getElementById("historyList");
-
-  if(history.length === 0){
-    empty.style.display = "block";
-    list.innerHTML = "";
-    return;
+  function updateNavState() {
+    const items = document.querySelectorAll('.nav-item');
+    items.forEach((item, i) => {
+      item.classList.toggle('active', i === currentQuestion);
+      item.classList.toggle('done', !!answers[i]);
+    });
+    // 让当前题在侧边栏中保持可见
+    const activeItem = items[currentQuestion];
+    if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
   }
-  empty.style.display = "none";
-  list.innerHTML = history.map((h, idx) => {
-    const date = new Date(h.date);
-    const dateStr = `${date.getFullYear()}.${(date.getMonth()+1).toString().padStart(2,'0')}.${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-    return `
-      <div class="history-item" onclick="viewHistoryItem(${idx})">
-        <div class="history-item-top">
-          <span class="history-date">${dateStr}</span>
+
+  function updateProgress() {
+    const answered = answers.filter(a => a).length;
+    document.getElementById('progressText').textContent = `${answered} / ${questions.length}`;
+    document.getElementById('progressFill').style.width = `${(answered / questions.length) * 100}%`;
+  }
+
+  function updateButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    prevBtn.style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    
+    const hasAnswer = !!answers[currentQuestion];
+    const answeredAll = answers.filter(a => a).length === questions.length;
+    
+    if (currentQuestion === questions.length - 1) {
+      nextBtn.innerHTML = `
+        查看结果
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6L9 17l-5-5"/>
+        </svg>
+      `;
+      const wasDisabled = nextBtn.disabled;
+      nextBtn.disabled = !answeredAll;
+      if (wasDisabled && !nextBtn.disabled) triggerBtnGlow();
+      if (!answeredAll) nextBtn.title = '请先答完所有题目';
+    } else {
+      nextBtn.innerHTML = `
+        下一题
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      `;
+      const wasDisabled = nextBtn.disabled;
+      nextBtn.disabled = !hasAnswer;
+      if (wasDisabled && !nextBtn.disabled) triggerBtnGlow();
+      nextBtn.title = '';
+    }
+  }
+
+  function triggerBtnGlow() {
+    const btn = document.getElementById('nextBtn');
+    btn.classList.remove('glow');
+    void btn.offsetWidth;
+    btn.classList.add('glow');
+  }
+
+  function prevQuestion() {
+    if (currentQuestion > 0) {
+      currentQuestion--;
+      renderQuestion();
+    }
+  }
+
+  function nextQuestion() {
+    if (currentQuestion < questions.length - 1) {
+      currentQuestion++;
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function jumpTo(index) {
+    currentQuestion = index;
+    renderQuestion();
+    closeSidebar();
+  }
+
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const isOpen = sidebar.classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('show', isOpen);
+  }
+
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+
+  // 计算结果并展示
+  function showResult() {
+    // 计算各维度平均分和总分
+    const dimScores = calcDimScores();
+    const totalScore = Math.round(dimScores.reduce((a, b) => a + b, 0) / dimScores.length);
+
+    // 确定段位
+    let rank = ranks[ranks.length - 1];
+    for (const r of ranks) {
+      if (totalScore >= r.min) {
+        rank = r;
+        break;
+      }
+    }
+
+    // 显示页面
+    document.getElementById('quizPage').classList.add('hidden');
+    document.getElementById('resultPage').classList.remove('hidden');
+    window.scrollTo(0, 0);
+
+    // 更新文案
+    document.getElementById('rankTitle').textContent = rank.title;
+    document.getElementById('rankDesc').textContent = rank.desc;
+
+    // 环形进度动画（每次都从空环开始播放）
+    const ring = document.getElementById('scoreRing');
+    const circumference = 2 * Math.PI * 90;
+    const offset = circumference - (totalScore / 100) * circumference;
+    ring.style.transition = 'none';
+    ring.style.strokeDashoffset = circumference;
+    void ring.getBoundingClientRect(); // 强制重排，让重置立即生效
+    setTimeout(() => {
+      ring.style.transition = 'stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1)';
+      ring.style.strokeDashoffset = offset;
+    }, 300);
+
+    // 分数数字动画
+    animateNumber('scoreNum', 0, totalScore, 2000);
+
+    // 渲染雷达图
+    renderRadar(dimScores);
+
+    // 渲染维度分数
+    renderDimScores(dimScores);
+
+    // 渲染优势短板
+    renderSWOT(dimScores);
+
+    // 渲染匹配画像（根据分数微调内容）
+    updateMatchProfiles(totalScore, dimScores);
+  }
+
+  // 数字动画
+  function animateNumber(id, start, end, duration) {
+    const el = document.getElementById(id);
+    const range = end - start;
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + range * easeProgress);
+      el.textContent = current;
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      }
+    }
+    requestAnimationFrame(update);
+  }
+
+  // 渲染雷达图
+  function renderRadar(dimScores) {
+    const svg = document.getElementById('radarChart');
+    const cx = 200, cy = 180, maxR = 130;
+    const dims = getDimensions();
+    const n = dims.length;
+    const angleStep = (2 * Math.PI) / n;
+    const startAngle = -Math.PI / 2;
+
+    let html = '';
+
+    // 背景网格（4层）
+    for (let level = 1; level <= 4; level++) {
+      const r = (maxR * level) / 4;
+      let points = [];
+      for (let i = 0; i < n; i++) {
+        const angle = startAngle + i * angleStep;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        points.push(`${x},${y}`);
+      }
+      html += `<polygon points="${points.join(' ')}" fill="none" stroke="#F0E5E8" stroke-width="1"/>`;
+    }
+
+    // 轴线
+    for (let i = 0; i < n; i++) {
+      const angle = startAngle + i * angleStep;
+      const x = cx + maxR * Math.cos(angle);
+      const y = cy + maxR * Math.sin(angle);
+      html += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#F0E5E8" stroke-width="1"/>`;
+    }
+
+    // 数据区域
+    let dataPoints = [];
+    for (let i = 0; i < n; i++) {
+      const score = (dimScores[i] || 0) / 100;
+      const r = maxR * score;
+      const angle = startAngle + i * angleStep;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      dataPoints.push(`${x},${y}`);
+    }
+    html += `<polygon points="${dataPoints.join(' ')}" 
+      fill="rgba(212, 86, 115, 0.18)" 
+      stroke="#D45673" 
+      stroke-width="2.5"
+      stroke-linejoin="round"
+      class="radar-data"/>`;
+
+    // 数据点
+    for (let i = 0; i < n; i++) {
+      const score = (dimScores[i] || 0) / 100;
+      const r = maxR * score;
+      const angle = startAngle + i * angleStep;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      html += `<circle cx="${x}" cy="${y}" r="5" fill="#D45673" stroke="white" stroke-width="2"/>`;
+    }
+
+    // 标签
+    for (let i = 0; i < n; i++) {
+      const angle = startAngle + i * angleStep;
+      const labelR = maxR + 24;
+      const x = cx + labelR * Math.cos(angle);
+      const y = cy + labelR * Math.sin(angle);
+      let anchor = 'middle';
+      if (Math.cos(angle) > 0.3) anchor = 'start';
+      if (Math.cos(angle) < -0.3) anchor = 'end';
+      
+      html += `
+        <text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" 
+          font-size="12" fill="#5C4A51" font-weight="500">
+          ${dims[i]}
+        </text>
+        <text x="${x}" y="${y + 16}" text-anchor="${anchor}" dominant-baseline="middle" 
+          font-size="11" fill="#D45673" font-weight="700">
+          ${dimScores[i] || 0}分
+        </text>
+      `;
+    }
+
+    svg.innerHTML = html;
+  }
+
+  // 渲染维度分数卡片
+  function renderDimScores(dimScores) {
+    const container = document.getElementById('dimScores');
+    const dims = getDimensions();
+    container.innerHTML = dims.map((dim, i) => {
+      const dimQ = questions.find(q => q.dim === dim);
+      return `
+        <div class="dim-score-item">
+          <div class="dim-score-num">${dimScores[i] || 0}</div>
+          <div class="dim-score-label">${dimQ.icon} ${dim}</div>
         </div>
-        <div class="history-brief">${h.brief || '相亲定位梳理'}</div>
-      </div>
+      `;
+    }).join('');
+  }
+
+  // 渲染优势短板
+  function renderSWOT(dimScores) {
+    // 找出得分最高和最低的3个维度
+    const dims = getDimensions();
+    const indexed = dimScores.map((s, i) => {
+      const dimQ = questions.find(q => q.dim === dims[i]);
+      return { dim: dims[i], score: s || 0, icon: dimQ.icon };
+    });
+    const sorted = [...indexed].sort((a, b) => b.score - a.score);
+    
+    const top3 = sorted.slice(0, 3);
+    const bottom3 = sorted.slice(-3).reverse();
+
+    const strengthDescs = {
+      '年龄优势': '正值黄金年龄窗口',
+      '城市定居': '定居稳定资源丰富',
+      '学历背景': '学历层次高很加分',
+      '经济能力': '经济独立有底气',
+      '外貌形象': '外在条件很出众',
+      '家庭条件': '家庭条件有支撑',
+      '性格特质': '性格好相处舒服',
+      '情感经历': '恋爱观成熟稳定',
+      '职业发展': '职业前景很不错'
+    };
+
+    const weaknessDescs = {
+      '年龄优势': '年龄窗口需要把握',
+      '城市定居': '定居稳定性待加强',
+      '学历背景': '学历竞争力一般',
+      '经济能力': '经济基础待加强',
+      '外貌形象': '形象提升空间大',
+      '家庭条件': '家庭支持较有限',
+      '性格特质': '性格可以更成熟',
+      '情感经历': '恋爱观还在成长',
+      '职业发展': '职业上升空间有限'
+    };
+
+    document.getElementById('strengthList').innerHTML = top3.map(item => 
+      `<li>${item.icon} ${item.dim}：${strengthDescs[item.dim]}</li>`
+    ).join('');
+
+    document.getElementById('weaknessList').innerHTML = bottom3.map(item => 
+      `<li>${item.icon} ${item.dim}：${weaknessDescs[item.dim]}</li>`
+    ).join('');
+  }
+
+  // 更新匹配画像
+  function updateMatchProfiles(totalScore, dimScores) {
+    // 根据不同维度得分调整画像内容
+    const dims = getDimensions();
+    const dimScoreMap = {};
+    dims.forEach((d, i) => { dimScoreMap[d] = dimScores[i] || 70; });
+    
+    const ageScore = dimScoreMap['年龄优势'];
+    const eduScore = dimScoreMap['学历背景'];
+    const ecoScore = dimScoreMap['经济能力'];
+    const cityScore = dimScoreMap['城市定居'];
+    const careerScore = dimScoreMap['职业发展'];
+
+    let highAge, wideAge, highIncome, wideIncome, highEdu, wideEdu;
+
+    if (ageScore >= 85) { highAge = '比你小 2-4 岁'; wideAge = '比你小 5 岁到大 3 岁'; }
+    else if (ageScore >= 70) { highAge = '与你同龄或小 2 岁'; wideAge = '比你小 3 岁到大 5 岁'; }
+    else { highAge = '比你大 2-5 岁'; wideAge = '年龄不限，看感觉'; }
+
+    if (ecoScore >= 85) { highIncome = '1.5万-3万/月'; wideIncome = '1万-2.5万/月'; }
+    else if (ecoScore >= 70) { highIncome = '1万-2万/月'; wideIncome = '8千-1.8万/月'; }
+    else { highIncome = '8千-1.5万/月'; wideIncome = '5千-1.2万/月'; }
+
+    if (eduScore >= 85) { highEdu = '本科及以上，名校优先'; wideEdu = '大专及以上，专业不限'; }
+    else if (eduScore >= 70) { highEdu = '大专及以上'; wideEdu = '高中及以上，有上进心'; }
+    else { highEdu = '学历相当即可'; wideEdu = '学历不限，能力重要'; }
+
+    let highCareer, wideCareer;
+    if (careerScore >= 85) { highCareer = '行业前景好，有上升空间'; wideCareer = '工作稳定就行'; }
+    else if (careerScore >= 70) { highCareer = '稳定职业，有一定发展'; wideCareer = '有正经工作，不啃老'; }
+    else { highCareer = '工作稳定，收入靠谱'; wideCareer = '有收入来源，不上进也行'; }
+
+    document.getElementById('highMatchList').innerHTML = `
+      <li><strong>年龄区间</strong>${highAge}</li>
+      <li><strong>月收入参考</strong>${highIncome}</li>
+      <li><strong>学历要求</strong>${highEdu}</li>
+      <li><strong>职业发展</strong>${highCareer}</li>
+      <li><strong>城市</strong>${cityScore >= 70 ? '同城，本地优先' : '同城或周边城市'}</li>
+      <li><strong>外貌形象</strong>看着顺眼，收拾干净</li>
+      <li><strong>家庭背景</strong>正常家庭，没负担</li>
+      <li><strong>相处特质</strong>人品好，聊得来</li>
     `;
-  }).join("");
-}
 
-function viewHistoryItem(idx){
-  const history = getHistory();
-  const record = history[idx];
-  if(!record) return;
-  answers = record.answers || {};
-  Object.assign(preferences, record.preferences || {});
-  buildReport();
-  document.getElementById("historyScreen").style.display = "none";
-  document.getElementById("resultScreen").style.display = "block";
-  window.scrollTo({top:0,behavior:"smooth"});
-}
+    document.getElementById('wideMatchList').innerHTML = `
+      <li><strong>年龄区间</strong>${wideAge}</li>
+      <li><strong>月收入参考</strong>${wideIncome}</li>
+      <li><strong>学历要求</strong>${wideEdu}</li>
+      <li><strong>职业发展</strong>${wideCareer}</li>
+      <li><strong>城市</strong>同城或有明确定居计划</li>
+      <li><strong>外貌形象</strong>整洁健康，不别扭</li>
+      <li><strong>家庭背景</strong>没重大债务问题就行</li>
+      <li><strong>相处特质</strong>尊重人，不偏激</li>
+    `;
+  }
 
-function backToIntro(){
-  document.getElementById("historyScreen").style.display = "none";
-  document.getElementById("introScreen").style.display = "block";
-  checkResumeAndHistory();
-}
+  // 页面切换
+  function startQuiz() {
+    currentQuestion = 0;
+    answers = new Array(questions.length).fill(null);
+    isNavigating = false;
+    document.getElementById('homePage').classList.add('hidden');
+    document.getElementById('resultPage').classList.add('hidden');
+    document.getElementById('quizPage').classList.remove('hidden');
+    window.scrollTo(0, 0);
+    closeSidebar();
+    init();
+  }
 
-// ============ 样例 ============
-function loadSample(){
-  answers = {
-    age: 28, height: 165, city: '上海', education: '本科', work: '时间相对规律',
-    hobbies: ['阅读或看电影', '散步或户外', '做饭与美食'],
-    chat: '先倾听，熟悉后再分享', conflict: '说明感受，一起讨论',
-    express: '用行动照顾对方',
-    strength: ['愿意倾听', '做事可靠', '尊重独立空间'],
-    lifestyle: '有固定见面时间，也有个人空间',
-    sleep: '正常作息（11-12点睡）', diet: '不忌口，什么都吃',
-    exercise: '偶尔运动，看心情', pet: '喜欢但暂时没养',
-    care: '暂无固定照护安排', housing: '与伴侣独立居住',
-    finance: '各自独立，共同开支协商',
-    marriage: '顺其自然，遇到合适的人再说', roles: '共同分担，灵活协商',
-    timeline: '先认真相处，再讨论结婚', children: '还不确定，需要进一步考虑',
-    location: '希望留在目前城市',
-    values: ['彼此尊重', '沟通坦诚', '共同成长'],
-    focus: '让见面聊天更自然'
-  };
-  goToResult();
-}
+  function retakeQuiz() {
+    startQuiz();
+  }
 
-// ============ Toast ============
-function showToast(msg){
-  const toast = document.getElementById("toast");
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 2500);
-}
+  function goHome() {
+    document.getElementById('quizPage').classList.add('hidden');
+    document.getElementById('resultPage').classList.add('hidden');
+    document.getElementById('homePage').classList.remove('hidden');
+    window.scrollTo(0, 0);
+  }
 
-// 打印样式修正
-window.addEventListener("beforeprint", () => {
-  document.getElementById("priorityChartSection").style.display = "block";
-});
+  // 入场动画
+  window.addEventListener('load', () => {
+    const heroText = document.querySelector('.hero-text');
+    const heroVisual = document.querySelector('.hero-visual');
+    if (heroText) {
+      heroText.style.opacity = '0';
+      heroText.style.transform = 'translateY(30px)';
+    }
+    if (heroVisual) {
+      heroVisual.style.opacity = '0';
+      heroVisual.style.transform = 'translateY(30px)';
+    }
+    
+    setTimeout(() => {
+      if (heroText) {
+        heroText.style.transition = 'all 1s cubic-bezier(0.4, 0, 0.2, 1)';
+        heroText.style.opacity = '1';
+        heroText.style.transform = 'translateY(0)';
+      }
+    }, 200);
+    
+    setTimeout(() => {
+      if (heroVisual) {
+        heroVisual.style.transition = 'all 1s cubic-bezier(0.4, 0, 0.2, 1)';
+        heroVisual.style.opacity = '1';
+        heroVisual.style.transform = 'translateY(0)';
+      }
+    }, 500);
+  });
+
+  // 滚动视差
+  window.addEventListener('scroll', () => {
+    const scrolled = window.pageYOffset;
+    const cards = document.querySelectorAll('.report-card');
+    cards.forEach((card, i) => {
+      const speed = 0.03 * (i + 1);
+      const baseRotate = card.classList.contains('report-main') ? 2 : -3;
+      card.style.transform = `translateY(${scrolled * speed}px) rotate(${baseRotate}deg)`;
+    });
+  });
 </script>
-</body>
-</html>
+
+
+
+</body></html>
