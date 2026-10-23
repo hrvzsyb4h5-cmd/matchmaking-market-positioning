@@ -520,6 +520,52 @@
     border-top: 1px solid var(--line);
   }
 
+  /* ========== 店铺品牌标识（低调小号） ========== */
+  .site-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 18px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--rose-400);
+    letter-spacing: 0.08em;
+    user-select: none;
+  }
+  .site-brand svg {
+    width: 13px;
+    height: 13px;
+    flex: none;
+    display: block;
+    opacity: 0.85;
+  }
+  .site-brand--light {
+    color: var(--ink-light);
+  }
+  .site-brand--light svg { opacity: 0.7; }
+
+  /* 侧边栏底部品牌 */
+  .sidebar-brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-light);
+    letter-spacing: 0.06em;
+    user-select: none;
+  }
+  .sidebar-brand-mark svg {
+    width: 11px;
+    height: 11px;
+    flex: none;
+    opacity: 0.75;
+    color: var(--rose-400);
+  }
+
   /* ========== 答题页 ========== */
   .quiz-page {
     min-height: 100vh;
@@ -1482,7 +1528,13 @@
   </section>
 
   <footer>
-    © 相亲市场定位测试 · 仅供娱乐参考
+    <div>© 相亲市场定位测试 · 仅供娱乐参考</div>
+    <div class="site-brand">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 3c.55 4.95 4.05 8.45 9 9-4.95.55-8.45 4.05-9 9-.55-4.95-4.05-8.45-9-9 4.95-.55 8.45-4.05 9-9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path>
+      </svg>
+      <span>MeetYourself 探索室</span>
+    </div>
   </footer>
 </div>
 
@@ -1514,6 +1566,12 @@
           </svg>
           返回首页
         </button>
+        <div class="sidebar-brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 3c.55 4.95 4.05 8.45 9 9-4.95.55-8.45 4.05-9 9-.55-4.95-4.05-8.45-9-9 4.95-.55 8.45-4.05 9-9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path>
+          </svg>
+          <span>MeetYourself 探索室</span>
+        </div>
       </div>
     </aside>
 
@@ -1674,6 +1732,13 @@
           </svg>
           重新测试
         </button>
+      </div>
+
+      <div class="site-brand site-brand--light" style="margin-top:40px;">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 3c.55 4.95 4.05 8.45 9 9-4.95.55-8.45 4.05-9 9-.55-4.95-4.05-8.45-9-9 4.95-.55 8.45-4.05 9-9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path>
+        </svg>
+        <span>MeetYourself 探索室</span>
       </div>
     </div>
   </div>
