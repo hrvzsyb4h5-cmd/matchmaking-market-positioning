@@ -899,6 +899,36 @@
     box-shadow: none;
     cursor: not-allowed;
   }
+  .nav-btn-next.is-pending {
+    background: linear-gradient(135deg, #E8B98A, #D49A5E);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(212, 154, 94, 0.3);
+  }
+
+  /* 全局轻提示 */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 40px;
+    transform: translate(-50%, 20px);
+    background: rgba(45, 31, 36, 0.92);
+    color: #fff;
+    padding: 13px 24px;
+    border-radius: 100px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 88vw;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(45, 31, 36, 0.28);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 200;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 
   /* 动画 */
   .fade-in {
@@ -1649,6 +1679,9 @@
   </div>
 </div>
 
+<!-- 全局轻提示 -->
+<div class="toast" id="toast"></div>
+
 <script>
   // 52 道精题 · 9 大维度
   const questions = [
@@ -2198,7 +2231,7 @@
     if (isNavigating) return;
     const opt = questions[currentQuestion].options[index];
     answers[currentQuestion] = { text: opt.text, score: opt.score };
-    
+
     // 自动跳转到下一题（最后一题不自动跳）
     if (currentQuestion < questions.length - 1) {
       const fromQuestion = currentQuestion;
@@ -2210,7 +2243,27 @@
       }, 250); // 给一点视觉反馈时间
     } else {
       renderQuestion();
+      // 最后一题：全部答完则稍后自动出结果，和前面的自动跳转体验保持一致
+      if (answers.every(a => a)) {
+        const fromQuestion = currentQuestion;
+        isNavigating = true;
+        setTimeout(() => {
+          // 这期间用户若手动翻到别的题，就不强制弹结果
+          if (currentQuestion === fromQuestion) showResult();
+          isNavigating = false;
+        }, 700);
+      }
     }
+  }
+
+  // 轻提示
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
   }
 
   // 计算各维度的平均分
@@ -2259,12 +2312,12 @@
   function updateButtons() {
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
-    
+
     prevBtn.style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
-    
+
     const hasAnswer = !!answers[currentQuestion];
-    const answeredAll = answers.filter(a => a).length === questions.length;
-    
+    const unansweredCount = answers.filter(a => !a).length;
+
     if (currentQuestion === questions.length - 1) {
       nextBtn.innerHTML = `
         查看结果
@@ -2272,10 +2325,12 @@
           <path d="M20 6L9 17l-5-5"/>
         </svg>
       `;
+      // 最后一题按钮始终可点：漏答时由 nextQuestion 引导跳转，不再让用户对着灰按钮无从下手
       const wasDisabled = nextBtn.disabled;
-      nextBtn.disabled = !answeredAll;
-      if (wasDisabled && !nextBtn.disabled) triggerBtnGlow();
-      if (!answeredAll) nextBtn.title = '请先答完所有题目';
+      nextBtn.disabled = false;
+      if (wasDisabled && unansweredCount === 0) triggerBtnGlow();
+      nextBtn.classList.toggle('is-pending', unansweredCount > 0);
+      nextBtn.title = unansweredCount > 0 ? `还有 ${unansweredCount} 题未作答` : '';
     } else {
       nextBtn.innerHTML = `
         下一题
@@ -2286,6 +2341,7 @@
       const wasDisabled = nextBtn.disabled;
       nextBtn.disabled = !hasAnswer;
       if (wasDisabled && !nextBtn.disabled) triggerBtnGlow();
+      nextBtn.classList.remove('is-pending');
       nextBtn.title = '';
     }
   }
@@ -2309,7 +2365,18 @@
       currentQuestion++;
       renderQuestion();
     } else {
-      showResult();
+      // 最后一题点“查看结果”
+      const firstUnanswered = answers.findIndex(a => !a);
+      if (firstUnanswered === -1) {
+        showResult();
+      } else {
+        const unansweredCount = answers.filter(a => !a).length;
+        currentQuestion = firstUnanswered;
+        renderQuestion();
+        closeSidebar();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast(`还有 ${unansweredCount} 题没作答，已帮你跳到第 ${firstUnanswered + 1} 题`);
+      }
     }
   }
 
